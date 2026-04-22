@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .header { background: #15803d; color: white; padding: 20px; text-align: center; }
+        .content { background: white; padding: 20px; margin: 10px 0; }
+        .footer { text-align: center; color: #666; font-size: 12px; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Retour Confirmé</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour {{ user.first_name }},</p>
+            <p>Merci d'avoir retourné vos livres! Voici les détails:</p>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <th style="text-align: left; padding: 10px;">Titre</th>
+                    <th style="text-align: left; padding: 10px;">Date de Retour</th>
+                </tr>
+                {% for book in books %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px;">{{ book.title }}</td>
+                    <td style="padding: 10px;">{{ returned_date|date:"d/m/Y" }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <p style="color: #15803d;"><strong>Vous avez accès à l'emprunt de {{ max_borrow_copies }} livres simultanément.</strong></p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 BiblioNUM - Bibliothèque Digitale. Tous droits réservés.</p>
+        </div>
+    </div>
+</body>
+</html>

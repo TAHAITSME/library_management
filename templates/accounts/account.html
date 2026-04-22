@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion du Compte | BiblioNUM{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <h1 style="font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--s-8);">Gestion du Compte</h1>
+
+        <!-- Change Password -->
+        <div class="card" style="padding: var(--s-8); margin-bottom: var(--s-6);">
+            <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: var(--s-6);">Changer le Mot de Passe</h3>
+            
+            <form method="post" action="#" novalidate style="display: flex; flex-direction: column; gap: var(--s-6);">
+                {% csrf_token %}
+
+                <div>
+                    <label for="old_password" style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Mot de passe actuel</label>
+                    <input type="password" name="old_password" id="old_password" required style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
+                </div>
+
+                <div>
+                    <label for="new_password1" style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Nouveau mot de passe</label>
+                    <input type="password" name="new_password1" id="new_password1" required style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
+                </div>
+
+                <div>
+                    <label for="new_password2" style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Confirmer le nouveau mot de passe</label>
+                    <input type="password" name="new_password2" id="new_password2" required style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-lock"></i> Mettre à Jour le Mot de Passe
+                </button>
+            </form>
+        </div>
+
+        <!-- Account Actions -->
+        <div class="card" style="padding: var(--s-8);">
+            <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: var(--s-6);">Paramètres du Compte</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: var(--s-3);">
+                <a href="{% url 'accounts:profile' %}" class="btn btn-ghost">
+                    <i class="fas fa-user"></i> Voir le Profil
+                </a>
+                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-ghost">
+                    <i class="fas fa-edit"></i> Modifier le Profil
+                </a>
+                <button class="btn btn-danger" onclick="if(confirm('Êtes-vous sûr?')) deleteAccount();">
+                    <i class="fas fa-trash"></i> Supprimer le Compte
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

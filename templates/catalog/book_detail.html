@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ book.title }} | BiblioNUM{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
+    <div style="display: grid; grid-template-columns: 300px 1fr; gap: var(--s-8);">
+        <!-- Cover & Actions -->
+        <aside>
+            <img src="{{ book.cover_image }}" alt="{{ book.title }}" style="width: 100%; border-radius: var(--r-xl); margin-bottom: var(--s-6);">
+            
+            <div class="card" style="padding: var(--s-6);">
+                <div style="display: flex; flex-direction: column; gap: var(--s-3);">
+                    {% if book.is_available_for_borrow %}
+                    <button onclick="borrowBook({{ book.id }})" class="btn btn-success btn-lg">
+                        <i class="fas fa-hand-holding-heart"></i> Emprunter
+                    </button>
+                    {% endif %}
+
+                    {% if book.is_available_for_sale %}
+                    <button onclick="addToCart({{ book.id }})" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-cart"></i> Ajouter au Panier
+                    </button>
+                    {% endif %}
+
+                    <button class="btn btn-ghost btn-lg">
+                        <i class="fas fa-bookmark"></i> Réserver
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Details -->
+        <main>
+            <div class="card" style="padding: var(--s-8);">
+                <h1 style="font-family: var(--font-display); font-size: var(--text-2xl); margin-bottom: var(--s-2);">{{ book.title }}</h1>
+                <p style="font-size: var(--text-lg); color: var(--text-2); margin-bottom: var(--s-4);">{{ book.author.first_name }} {{ book.author.last_name }}</p>
+
+                <div style="display: flex; align-items: center; gap: var(--s-4); margin-bottom: var(--s-8); padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md);">
+                    <div>
+                        <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--s-1);">{{ book.rating|default:"N/A" }} ⭐</div>
+                        <div style="color: var(--text-2); font-size: var(--text-sm);">{{ book.reviews.count }} avis</div>
+                    </div>
+                    {% if book.is_available_for_sale %}
+                    <div style="border-left: 1px solid var(--divider); padding-left: var(--s-4);">
+                        <div style="color: var(--text-2); font-size: var(--text-sm);">Prix</div>
+                        <div style="font-size: var(--text-lg); font-weight: 600;">{{ book.price }}.00 DH</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: var(--s-4);">Description</h3>
+                <p style="color: var(--text-2); line-height: 1.8; margin-bottom: var(--s-8);">{{ book.description }}</p>
+
+                <hr style="border-color: var(--divider); margin-bottom: var(--s-8);">
+
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-4); margin-bottom: var(--s-8);">
+                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
+                        <div style="color: var(--text-2); font-size: var(--text-sm);">Auteur</div>
+                        <div style="font-weight: 600;">{{ book.author.first_name }} {{ book.author.last_name }}</div>
+                    </div>
+                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
+                        <div style="color: var(--text-2); font-size: var(--text-sm);">Année</div>
+                        <div style="font-weight: 600;">{{ book.publication_date.year }}</div>
+                    </div>
+                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
+                        <div style="color: var(--text-2); font-size: var(--text-sm);">Pages</div>
+                        <div style="font-weight: 600;">{{ book.pages }}</div>
+                    </div>
+                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
+                        <div style="color: var(--text-2); font-size: var(--text-sm);">Catégorie</div>
+                        <div style="font-weight: 600;">{{ book.category.name }}</div>
+                    </div>
+                </div>
+
+                <!-- Reviews -->
+                <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: var(--s-4);">Avis ({{ book.reviews.count }})</h3>
+                
+                {% if user.is_authenticated %}
+                <div class="card" style="padding: var(--s-6); margin-bottom: var(--s-6);">
+                    <h4 style="font-weight: 600; margin-bottom: var(--s-4);">Laisser un avis</h4>
+                    <form method="post" action="{% url 'catalog:add_review' book.id %}">
+                        {% csrf_token %}
+                        <div style="margin-bottom: var(--s-4);">
+                            <label style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Note</label>
+                            <select name="rating" required style="padding: var(--s-2); border: 1px solid var(--border); border-radius: var(--r-md);">
+                                <option value="">Sélectionner...</option>
+                                <option value="5">5 ⭐ Excellent</option>
+                                <option value="4">4 ⭐ Bon</option>
+                                <option value="3">3 ⭐ Moyen</option>
+                                <option value="2">2 ⭐ Mauvais</option>
+                                <option value="1">1 ⭐ Très mauvais</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: var(--s-4);">
+                            <label style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Commentaire</label>
+                            <textarea name="content" style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md); min-height: 120px;"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Poster l'avis</button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- Reviews List -->
+                <div style="display: flex; flex-direction: column; gap: var(--s-4);">
+                    {% for review in book.reviews.all %}
+                    <div class="card" style="padding: var(--s-4);">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--s-3);">
+                            <div>
+                                <h5 style="font-weight: 600;">{{ review.user.username }}</h5>
+                                <div style="color: var(--primary);">{{ review.rating }} ⭐</div>
+                            </div>
+                            <div style="color: var(--text-2); font-size: var(--text-sm);">{{ review.created_at|date:"d M Y" }}</div>
+                        </div>
+                        <p style="color: var(--text-2);">{{ review.content }}</p>
+                    </div>
+                    {% empty %}
+                    <p style="color: var(--text-2); text-align: center;">Aucun avis encore.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

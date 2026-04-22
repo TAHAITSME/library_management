@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Recommandations Personnalisées | BiblioNUM{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
+    <!-- Header -->
+    <div style="margin-bottom: var(--s-12);">
+        <div style="display: flex; align-items: center; gap: var(--s-4); margin-bottom: var(--s-4);">
+            <span style="font-size: 2.5rem;">💡</span>
+            <h1 style="font-family: var(--font-display); font-size: var(--text-3xl); margin: 0;">Recommandations Personnalisées</h1>
+        </div>
+        <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">Découvrez les livres choisis spécialement pour vous basés sur votre historique</p>
+    </div>
+
+    {% if has_recommendations %}
+    <!-- Pour Vous -->
+    <div style="margin-bottom: var(--s-16);">
+        <h2 style="font-family: var(--font-display); font-size: var(--text-2xl); margin-bottom: var(--s-6);">⭐ Pour Vous</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--s-6);">
+            {% for book in recommendations %}
+            <div class="card" style="display: flex; flex-direction: column; overflow: hidden;">
+                <div style="aspect-ratio: 3/4; background: var(--surface-raised); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    {% if book.cover_image %}
+                    <img src="{{ book.cover_image }}" alt="{{ book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    <span style="font-size: 3rem;">📖</span>
+                    {% endif %}
+                </div>
+                <div style="padding: var(--s-4); display: flex; flex-direction: column; gap: var(--s-3); flex: 1;">
+                    <div>
+                        <h3 style="font-size: var(--text-base); font-weight: 600; margin: 0 0 var(--s-1) 0; line-height: 1.3;">{{ book.title }}</h3>
+                        <p style="font-size: var(--text-sm); color: var(--text-secondary); margin: 0;">{{ book.author.first_name }} {{ book.author.last_name }}</p>
+                    </div>
+                    
+                    <!-- Rating -->
+                    <div style="display: flex; align-items: center; gap: var(--s-2);">
+                        <div style="color: #f59e0b;">
+                            {% for i in "12345" %}
+                                {% if i|add:0 <= book.rating %}★{% elif i|add:0 <= book.rating|add:0.5 %}½{% else %}☆{% endif %}
+                            {% endfor %}
+                        </div>
+                        <span style="font-size: var(--text-xs); color: var(--text-secondary);">{{ book.rating }}/5 ({{ book.number_of_reviews }})</span>
+                    </div>
+                    
+                    <!-- Price & Status -->
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: var(--primary); font-size: var(--text-lg);">{{ book.price }} DH</span>
+                        {% if book.is_available %}
+                        <span style="font-size: var(--text-xs); background: rgba(34, 197, 94, 0.1); color: #22c55e; padding: var(--s-1) var(--s-2); border-radius: var(--r-sm);">✓ Dispo</span>
+                        {% else %}
+                        <span style="font-size: var(--text-xs); background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: var(--s-1) var(--s-2); border-radius: var(--r-sm);">✕ Indisponible</span>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{% url 'catalog:book_detail' book.slug %}" style="display: block; padding: var(--s-3); background: var(--primary); color: white; text-align: center; border-radius: var(--r-md); text-decoration: none; font-weight: 600; margin-top: auto;">Voir le livre</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if top_books %}
+    <!-- Tendances du Moment -->
+    <div style="margin-top: var(--s-16);">
+        <h2 style="font-family: var(--font-display); font-size: var(--text-2xl); margin-bottom: var(--s-6);">🔥 Tendances du Moment</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--s-6);">
+            {% for book in top_books %}
+            <div class="card" style="display: flex; flex-direction: column; overflow: hidden;">
+                <div style="aspect-ratio: 3/4; background: var(--surface-raised); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    {% if book.cover_image %}
+                    <img src="{{ book.cover_image }}" alt="{{ book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    <span style="font-size: 3rem;">📖</span>
+                    {% endif %}
+                </div>
+                <div style="padding: var(--s-4); display: flex; flex-direction: column; gap: var(--s-3); flex: 1;">
+                    <div>
+                        <h3 style="font-size: var(--text-base); font-weight: 600; margin: 0 0 var(--s-1) 0; line-height: 1.3;">{{ book.title }}</h3>
+                        <p style="font-size: var(--text-sm); color: var(--text-secondary); margin: 0;">{{ book.author.first_name }} {{ book.author.last_name }}</p>
+                    </div>
+                    
+                    <!-- Rating -->
+                    <div style="display: flex; align-items: center; gap: var(--s-2);">
+                        <div style="color: #f59e0b;">
+                            {% for i in "12345" %}
+                                {% if i|add:0 <= book.rating %}★{% elif i|add:0 <= book.rating|add:0.5 %}½{% else %}☆{% endif %}
+                            {% endfor %}
+                        </div>
+                        <span style="font-size: var(--text-xs); color: var(--text-secondary);">{{ book.rating }}/5</span>
+                    </div>
+                    
+                    <!-- Price & Status -->
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: var(--primary); font-size: var(--text-lg);">{{ book.price }} DH</span>
+                        {% if book.is_available %}
+                        <span style="font-size: var(--text-xs); background: rgba(34, 197, 94, 0.1); color: #22c55e; padding: var(--s-1) var(--s-2); border-radius: var(--r-sm);">✓ Dispo</span>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{% url 'catalog:book_detail' book.slug %}" style="display: block; padding: var(--s-3); background: var(--primary); color: white; text-align: center; border-radius: var(--r-md); text-decoration: none; font-weight: 600; margin-top: auto;">Voir le livre</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not has_recommendations and not top_books %}
+    <!-- Empty State -->
+    <div style="text-align: center; padding: var(--s-16);">
+        <span style="font-size: 4rem; display: block; margin-bottom: var(--s-4);">📚</span>
+        <h2 style="font-family: var(--font-display); margin-bottom: var(--s-3);">Aucune recommandation pour le moment</h2>
+        <p style="color: var(--text-secondary); margin-bottom: var(--s-6);">Commencez par emprunter des livres pour obtenir des recommandations personnalisées!</p>
+        <a href="{% url 'catalog:books_list' %}" style="display: inline-block; padding: var(--s-3) var(--s-6); background: var(--primary); color: white; border-radius: var(--r-md); text-decoration: none; font-weight: 600;">Explorer le catalogue</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

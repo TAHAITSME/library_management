@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Inscription | BiblioNUM{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
+    <div style="max-width: 500px; margin: 0 auto;">
+        <div class="card" style="padding: var(--s-8);">
+            <div style="text-align: center; margin-bottom: var(--s-8);">
+                <h1 style="font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--s-2);">Créer un Compte</h1>
+                <p style="color: var(--text-2);">Rejoignez BiblioNUM et commencez à lire</p>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="toast toast--danger" role="alert" style="margin-bottom: var(--s-6);">
+                    <i class="fas fa-circle-xmark"></i>
+                    <div>{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate style="display: flex; flex-direction: column; gap: var(--s-6);">
+                {% csrf_token %}
+
+                <div>
+                    <label for="id_username" style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Nom d'utilisateur</label>
+                    <input type="text" name="username" id="id_username" required style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
+                    {% if form.username.errors %}<p style="color: var(--danger); font-size: var(--text-sm);">{{ form.username.errors }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label for="id_email" style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Email</label>
+                    <input type="email" name="email" id="id_email" required style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
+                    {% if form.email.errors %}<p style="color: var(--danger); font-size: var(--text-sm);">{{ form.email.errors }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label for="id_password1" style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Mot de passe</label>
+                    <input type="password" name="password1" id="id_password1" required style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
+                    {% if form.password1.errors %}<p style="color: var(--danger); font-size: var(--text-sm);">{{ form.password1.errors }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label for="id_password2" style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Confirmer le mot de passe</label>
+                    <input type="password" name="password2" id="id_password2" required style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
+                    {% if form.password2.errors %}<p style="color: var(--danger); font-size: var(--text-sm);">{{ form.password2.errors }}</p>{% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg btn-full">
+                    <i class="fas fa-user-plus"></i> Créer un Compte
+                </button>
+            </form>
+
+            <hr style="margin: var(--s-6) 0; border-color: var(--divider);">
+
+            <p style="text-align: center; color: var(--text-2);">
+                Déjà inscrit? <a href="{% url 'accounts:login' %}" style="color: var(--primary); font-weight: 600;">Se connecter</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

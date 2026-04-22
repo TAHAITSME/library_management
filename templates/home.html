@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Accueil | BiblioNUM{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="lib-hero" style="margin-bottom: var(--s-20);">
+    <div style="text-align: center;">
+        <h1 class="lib-hero__title">Bienvenue à BiblioNUM</h1>
+        <p class="lib-hero__subtitle">La plus grande plateforme de lecture numérique au Maroc</p>
+        <div style="display: flex; gap: var(--s-4); justify-content: center; flex-wrap: wrap; margin-top: var(--s-8);">
+            <a href="{% url 'catalog:books_list' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-book-open"></i> Découvrir le Catalogue
+            </a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'accounts:register' %}" class="btn btn-ghost btn-lg">
+                <i class="fas fa-user-plus"></i> S'inscrire Gratuitement
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Stats -->
+<section class="grid-4" style="margin-bottom: var(--s-20);">
+    <div class="card" style="text-align: center; padding: var(--s-6);">
+        <div style="font-size: 2.5rem; margin-bottom: var(--s-2);">📚</div>
+        <h3 style="font-size: var(--text-lg); margin-bottom: var(--s-1);">50K+ Livres</h3>
+        <p style="color: var(--text-2);">Collection complète</p>
+    </div>
+    <div class="card" style="text-align: center; padding: var(--s-6);">
+        <div style="font-size: 2.5rem; margin-bottom: var(--s-2);">👥</div>
+        <h3 style="font-size: var(--text-lg); margin-bottom: var(--s-1);">100K+ Lecteurs</h3>
+        <p style="color: var(--text-2);">Communauté active</p>
+    </div>
+    <div class="card" style="text-align: center; padding: var(--s-6);">
+        <div style="font-size: 2.5rem; margin-bottom: var(--s-2);">💰</div>
+        <h3 style="font-size: var(--text-lg); margin-bottom: var(--s-1);">Emprunt Gratuit</h3>
+        <p style="color: var(--text-2);">Jusqu'à 10 livres</p>
+    </div>
+    <div class="card" style="text-align: center; padding: var(--s-6);">
+        <div style="font-size: 2.5rem; margin-bottom: var(--s-2);">🎯</div>
+        <h3 style="font-size: var(--text-lg); margin-bottom: var(--s-1);">100% Numérique</h3>
+        <p style="color: var(--text-2);">Accès instantané</p>
+    </div>
+</section>
+
+<!-- Features -->
+<section style="margin-bottom: var(--s-20);">
+    <h2 style="font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--s-8); text-align: center;">Nos Fonctionnalités</h2>
+    <div class="grid-3">
+        <div class="card">
+            <div style="padding: var(--s-6);">
+                <div style="font-size: 2rem; margin-bottom: var(--s-4);">📖</div>
+                <h3 style="font-family: var(--font-display); margin-bottom: var(--s-3);">Emprunt Simple</h3>
+                <p style="color: var(--text-2);">Empruntez des livres gratuitement pour 30 jours. Renouvelez autant de fois que vous voulez!</p>
+            </div>
+        </div>
+        <div class="card">
+            <div style="padding: var(--s-6);">
+                <div style="font-size: 2rem; margin-bottom: var(--s-4);">🛒</div>
+                <h3 style="font-family: var(--font-display); margin-bottom: var(--s-3);">Achat Flexible</h3>
+                <p style="color: var(--text-2);">Achetez vos livres préférés à petit prix avec livraison rapide à domicile.</p>
+            </div>
+        </div>
+        <div class="card">
+            <div style="padding: var(--s-6);">
+                <div style="font-size: 2rem; margin-bottom: var(--s-4);">⭐</div>
+                <h3 style="font-family: var(--font-display); margin-bottom: var(--s-3);">Avis & Notes</h3>
+                <p style="color: var(--text-2);">Laissez vos avis, notez les livres et découvrez les recommandations personnalisées.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+{% if not user.is_authenticated %}
+<section style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); padding: var(--s-12); border-radius: var(--r-2xl); text-align: center; color: white;">
+    <h2 style="font-family: var(--font-display); margin-bottom: var(--s-4);">Prêt à commencer?</h2>
+    <p style="font-size: var(--text-lg); margin-bottom: var(--s-6);">Rejoignez la communauté BiblioNUM et accédez à des milliers de livres!</p>
+    <a href="{% url 'accounts:register' %}" class="btn" style="background: white; color: var(--primary); font-weight: 600;">Créer un Compte Gratuit</a>
+</section>
+{% endif %}
+{% endblock %}

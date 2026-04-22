@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .header { background: #3730a3; color: white; padding: 20px; text-align: center; }
+        .content { background: white; padding: 20px; margin: 10px 0; }
+        .footer { text-align: center; color: #666; font-size: 12px; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Votre Commande Est Expédiée!</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour {{ user.first_name }},</p>
+            <p>Bonne nouvelle! Votre commande a été expédiée et est en route vers vous.</p>
+            <div style="background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <p><strong>Numéro de commande:</strong> {{ order.order_number }}</p>
+                <p><strong>Adresse de livraison:</strong> {{ order.shipping_address }}</p>
+                <p><strong>Numéro de suivi:</strong> {{ tracking_number|default:"À venir" }}</p>
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <th style="text-align: left; padding: 10px;">Titre</th>
+                    <th style="text-align: left; padding: 10px;">Quantité</th>
+                    <th style="text-align: right; padding: 10px;">Prix</th>
+                </tr>
+                {% for item in order_items %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px;">{{ item.book.title }}</td>
+                    <td style="padding: 10px;">{{ item.quantity }}</td>
+                    <td style="text-align: right; padding: 10px;">{{ item.price|floatformat:2 }} MAD</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <p style="text-align: right; margin-top: 20px;"><strong>Total: {{ order.total|floatformat:2 }} MAD</strong></p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 BiblioNUM - Bibliothèque Digitale. Tous droits réservés.</p>
+        </div>
+    </div>
+</body>
+</html>

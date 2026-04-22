@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Résultats de Recherche | Bibliothèque{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'catalog:books_list' %}">Catalogue</a></li>
+        <li class="breadcrumb-item active">Résultats de Recherche</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-search"></i> Résultats de Recherche</h1>
+    {% if search %}
+        <p class="text-muted mb-0">Recherche pour: <strong>"{{ search }}"</strong></p>
+    {% endif %}
+</div>
+
+<!-- Filtres -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="fas fa-filter"></i> Filtres</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Recherche</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Titre, auteur, ISBN...">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="min_price" class="form-label">Prix Min</label>
+                <input type="number" class="form-control" id="min_price" name="min_price" value="{{ min_price }}" step="0.01">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="max_price" class="form-label">Prix Max</label>
+                <input type="number" class="form-control" id="max_price" name="max_price" value="{{ max_price }}" step="0.01">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="min_rating" class="form-label">Note Min</label>
+                <input type="number" class="form-control" id="min_rating" name="min_rating" value="{{ min_rating }}" min="1" max="5" step="0.5">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="sort" class="form-label">Trier par</label>
+                <select class="form-select" id="sort" name="sort">
+                    <option value="">Pertinence</option>
+                    <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Prix (↑)</option>
+                    <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Prix (↓)</option>
+                    <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Note</option>
+                    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Plus récent</option>
+                </select>
+            </div>
+            
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Chercher
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Résultats -->
+<div class="mb-3">
+    <p class="text-muted">
+        <strong>{{ books_count }}</strong> livre{{ books_count|pluralize }} trouvé{{ books_count|pluralize }}
+        {% if search %}<strong>"{{ search }}"</strong>{% endif %}
+    </p>
+</div>
+
+{% if books %}
+    <div class="row">
+        {% for book in books %}
+            <div class="col-md-3 mb-4">
+                <div class="card book-card h-100">
+                    <div class="book-cover">
+                        {% if book.cover_image %}
+                            <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="img-fluid">
+                        {% else %}
+                            <i class="fas fa-book"></i>
+                        {% endif %}
+                    </div>
+                    <div class="book-info">
+                        <h6 class="book-title">{{ book.title }}</h6>
+                        <p class="book-author">{{ book.author }}</p>
+                        
+                        <!-- Évaluation -->
+                        <div class="rating text-warning mb-2">
+                            {% for i in "12345" %}
+                                {% if i|add:0 <= book.rating %}
+                                    <i class="fas fa-star"></i>
+                                {% elif i|add:0 <= book.rating|add:0.5 %}
+                                    <i class="fas fa-star-half-alt"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                            <small class="text-muted ms-2">({{ book.number_of_reviews }})</small>
+                        </div>
+                        
+                        <p class="book-price">{{ book.price }}€</p>
+                        
+                        {% if book.is_available %}
+                            <span class="badge-status badge-available mb-2">
+                                <i class="fas fa-check-circle"></i> {{ book.available_copies }} dispo
+                            </span>
+                        {% else %}
+                            <span class="badge-status badge-unavailable mb-2">
+                                <i class="fas fa-times-circle"></i> Indisponible
+                            </span>
+                        {% endif %}
+                        
+                        <a href="{% url 'catalog:book_detail' book.slug %}" class="btn btn-sm btn-primary mt-auto w-100">
+                            <i class="fas fa-eye"></i> Voir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-light text-center py-5">
+        <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc;"></i>
+        <p class="text-muted mt-3 mb-0">Aucun livre trouvé avec ces critères.</p>
+        <small class="text-muted">Essayez d'affiner votre recherche</small>
+    </div>
+{% endif %}
+{% endblock %}

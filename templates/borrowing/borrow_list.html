@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes Emprunts | BiblioNUM{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
+    <!-- Header -->
+    <div style="margin-bottom: var(--s-12); display: flex; justify-content: space-between; align-items: center;">
+        <h1 style="font-family: var(--font-display); font-size: var(--text-3xl); margin: 0;">📚 Mes Emprunts</h1>
+        <a href="{% url 'catalog:books_list' %}" style="display: inline-block; padding: var(--s-3) var(--s-6); background: var(--primary); color: white; text-decoration: none; border-radius: var(--r-md); font-weight: 600;">+ Ajouter un livre</a>
+    </div>
+
+    <!-- Statistiques -->
+    {% if stats %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--s-4); margin-bottom: var(--s-8);">
+        <div class="card" style="padding: var(--s-6); background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));">
+            <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--s-2);">Emprunts Actifs</div>
+            <div style="font-size: var(--text-3xl); font-weight: 600; color: var(--primary);">{{ stats.total_active }}</div>
+        </div>
+        <div class="card" style="padding: var(--s-6); background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));">
+            <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--s-2);">En Retard</div>
+            <div style="font-size: var(--text-3xl); font-weight: 600; color: #ef4444;">{{ stats.overdue_count }}</div>
+        </div>
+        <div class="card" style="padding: var(--s-6); background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05));">
+            <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--s-2);">Pénalités Dues</div>
+            <div style="font-size: var(--text-3xl); font-weight: 600; color: #f97316;">{{ stats.total_fine|floatformat:2 }}€</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Emprunts Actifs -->
+    {% if active_borrows %}
+    <div style="margin-bottom: var(--s-12);">
+        <h2 style="font-family: var(--font-display); font-size: var(--text-2xl); margin-bottom: var(--s-6);">Emprunts Actifs</h2>
+        
+        <div style="display: flex; flex-direction: column; gap: var(--s-4);">
+            {% for borrow in active_borrows %}
+            <div class="card" style="padding: var(--s-6); display: grid; grid-template-columns: 100px 1fr auto; gap: var(--s-6); align-items: center;">
+                <!-- Couverture -->
+                <div style="aspect-ratio: 2/3; background: var(--surface-raised); border-radius: var(--r-md); overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                    {% if borrow.book.cover_image %}
+                    <img src="{{ borrow.book.cover_image }}" alt="{{ borrow.book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    <span style="font-size: 2rem;">📖</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Infos -->
+                <div>
+                    <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin: 0 0 var(--s-2) 0;">{{ borrow.book.title }}</h3>
+                    <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0 0 var(--s-3) 0;">Par {{ borrow.book.author.first_name }} {{ borrow.book.author.last_name }}</p>
+                    
+                    <div style="display: flex; gap: var(--s-6); font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--s-3);">
+                        <span><strong>Emprunté:</strong> {{ borrow.borrow_date|date:"d M Y" }}</span>
+                        <span><strong>À rendre:</strong> {{ borrow.due_date|date:"d M Y" }}</span>
+                    </div>
+                    
+                    {% if borrow.status == 'overdue' %}
+                    <div style="display: inline-block; padding: var(--s-2) var(--s-3); background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: var(--r-sm); font-size: var(--text-xs); font-weight: 600;">
+                        ⚠️ EN RETARD - Pénalité: {{ borrow.fine_amount|floatformat:2 }}€
+                    </div>
+                    {% elif borrow.get_days_left <= 3 %}
+                    <div style="display: inline-block; padding: var(--s-2) var(--s-3); background: rgba(249, 115, 22, 0.1); color: #f97316; border-radius: var(--r-sm); font-size: var(--text-xs); font-weight: 600;">
+                        ⏰ {{ borrow.get_days_left }} jours restants
+                    </div>
+                    {% else %}
+                    <div style="display: inline-block; padding: var(--s-2) var(--s-3); background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: var(--r-sm); font-size: var(--text-xs); font-weight: 600;">
+                        ✓ {{ borrow.get_days_left }} jours restants
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Actions -->
+                <div style="display: flex; flex-direction: column; gap: var(--s-3);">
+                    <a href="{% url 'borrowing:borrow_detail' borrow.id %}" style="display: inline-block; padding: var(--s-3) var(--s-4); background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--r-md); text-decoration: none; color: var(--text); text-align: center; font-size: var(--text-sm); font-weight: 600; transition: all 0.2s;">
+                        📋 Détails
+                    </a>
+                    <form method="post" action="{% url 'borrowing:return_book' borrow.id %}" style="display: block;">
+                        {% csrf_token %}
+                        <button type="submit" style="display: block; width: 100%; padding: var(--s-3); background: var(--danger); color: white; border: none; border-radius: var(--r-md); font-weight: 600; cursor: pointer; font-size: var(--text-sm);">
+                            ↩️ Retourner
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Emprunts Retournés -->
+    {% if returned_borrows %}
+    <div style="margin-bottom: var(--s-12);">
+        <h2 style="font-family: var(--font-display); font-size: var(--text-2xl); margin-bottom: var(--s-6);">Historique (10 derniers)</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: var(--s-4);">
+            {% for borrow in returned_borrows %}
+            <div class="card" style="padding: var(--s-4); display: flex; flex-direction: column;">
+                <div style="aspect-ratio: 3/4; background: var(--surface-raised); border-radius: var(--r-md); overflow: hidden; margin-bottom: var(--s-3); display: flex; align-items: center; justify-content: center;">
+                    {% if borrow.book.cover_image %}
+                    <img src="{{ borrow.book.cover_image }}" alt="{{ borrow.book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    <span style="font-size: 2rem;">📖</span>
+                    {% endif %}
+                </div>
+                
+                <h3 style="font-size: var(--text-sm); font-weight: 600; margin: 0 0 var(--s-2) 0; line-height: 1.3;">{{ borrow.book.title }}</h3>
+                <p style="color: var(--text-secondary); font-size: var(--text-xs); margin: 0 0 var(--s-3) 0;">{{ borrow.book.author.first_name }} {{ borrow.book.author.last_name }}</p>
+                
+                <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: auto;">
+                    <div style="margin-bottom: var(--s-2);">Retourné: {{ borrow.return_date|date:"d M Y" }}</div>
+                    {% if borrow.fine_amount > 0 %}
+                    <div style="padding: var(--s-2); background: rgba(249, 115, 22, 0.1); color: #f97316; border-radius: var(--r-sm); text-align: center;">
+                        Pénalité: {{ borrow.fine_amount|floatformat:2 }}€
+                    </div>
+                    {% else %}
+                    <div style="padding: var(--s-2); background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: var(--r-sm); text-align: center;">
+                        ✓ Retourné à temps
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- État Vide -->
+    {% if not active_borrows and not returned_borrows %}
+    <div style="text-align: center; padding: var(--s-16);">
+        <div style="font-size: 4rem; margin-bottom: var(--s-4);">📚</div>
+        <h2 style="font-family: var(--font-display); margin-bottom: var(--s-3);">Aucun emprunt</h2>
+        <p style="color: var(--text-secondary); margin-bottom: var(--s-6);">Vous n'avez aucun livre emprunté. Découvrez notre catalogue!</p>
+        <a href="{% url 'catalog:books_list' %}" style="display: inline-block; padding: var(--s-3) var(--s-6); background: var(--primary); color: white; text-decoration: none; border-radius: var(--r-md); font-weight: 600;">
+            📖 Découvrir des livres
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

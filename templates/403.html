@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Erreur 403 - Accès Interdit | BiblioNUM{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: var(--s-20); margin-bottom: var(--s-20); text-align: center;">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <!-- Error Icon -->
+        <div style="font-size: 5rem; margin-bottom: var(--s-6);">
+            <i class="fas fa-lock" style="color: var(--color-danger)"></i>
+        </div>
+
+        <!-- Error Title -->
+        <h1 style="font-size: var(--text-3xl); font-family: var(--font-display); margin-bottom: var(--s-4); font-weight: 700;">
+            Erreur 403 - Accès Interdit
+        </h1>
+
+        <!-- Error Description -->
+        <p style="font-size: var(--text-lg); color: var(--text-secondary); margin-bottom: var(--s-8); line-height: 1.6;">
+            {% if csrf_failure %}
+                <strong>Vérification CSRF échouée.</strong><br>
+                Votre session a peut-être expiré ou la requête n'est pas valide. 
+                <br><br>
+                <strong>Solutions :</strong>
+                <ul style="text-align: left; display: inline-block; margin-top: var(--s-4);">
+                    <li>Actualisez la page et réessayez</li>
+                    <li>Effacez les cookies de votre navigateur</li>
+                    <li>Vérifiez que les cookies sont activés</li>
+                    <li>Assurez-vous d'être connecté</li>
+                </ul>
+            {% else %}
+                Vous n'avez pas la permission d'accéder à cette ressource.
+            {% endif %}
+        </p>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: var(--s-4); justify-content: center; margin-top: var(--s-8);">
+            <a href="javascript:history.back()" class="btn btn-primary btn-lg">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+            <a href="{% url 'home' %}" class="btn btn-ghost btn-lg">
+                <i class="fas fa-home"></i> Accueil
+            </a>
+        </div>
+
+        <!-- Debug Info (only in DEBUG mode) -->
+        {% if debug %}
+        <div style="margin-top: var(--s-12); padding: var(--s-6); background: var(--bg-secondary); border-radius: var(--r-md); text-align: left;">
+            <details style="cursor: pointer;">
+                <summary style="font-weight: 600; margin-bottom: var(--s-3);">
+                    <i class="fas fa-bug"></i> Informations de débogage
+                </summary>
+                <pre style="background: var(--bg-tertiary); padding: var(--s-4); border-radius: var(--r-sm); overflow-x: auto; font-size: 0.875rem; margin-top: var(--s-3);">{{ reason }}</pre>
+            </details>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

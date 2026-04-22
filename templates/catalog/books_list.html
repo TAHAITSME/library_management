@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Catalogue | BiblioNUM{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
+    <div style="display: grid; grid-template-columns: 280px 1fr; gap: var(--s-8);">
+        <!-- Sidebar Filters -->
+        <aside>
+            <div class="card" style="padding: var(--s-6); position: sticky; top: var(--s-4);">
+                <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: var(--s-4);">Filtres</h3>
+
+                <form method="GET" id="filterForm" style="display: flex; flex-direction: column; gap: var(--s-6);">
+                    {% if search %}
+                    <input type="hidden" name="search" value="{{ search }}">
+                    {% endif %}
+
+                    <!-- Catégories -->
+                    <div>
+                        <h4 style="font-weight: 600; margin-bottom: var(--s-3);">Catégories</h4>
+                        <div style="display: flex; flex-direction: column; gap: var(--s-2);">
+                            {% for category in categories %}
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 0.9rem;">
+                                <input type="radio" name="category" value="{{ category.id }}" 
+                                    style="margin-right: var(--s-2);" 
+                                    {% if current_category == category.id|stringformat:"s" %}checked{% endif %}>
+                                <span>{{ category.name }}</span>
+                            </label>
+                            {% endfor %}
+                            <label style="display: flex; align-items: center; cursor: pointer; font-size: 0.9rem; margin-top: var(--s-2);">
+                                <input type="radio" name="category" value="" style="margin-right: var(--s-2);" {% if not current_category %}checked{% endif %}>
+                                <span style="font-style: italic;">Toutes les catégories</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr style="border-color: var(--divider);">
+
+                    <!-- Auteurs -->
+                    <div>
+                        <h4 style="font-weight: 600; margin-bottom: var(--s-3);">Auteurs</h4>
+                        <select name="author" style="width: 100%; padding: var(--s-2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--background); color: var(--text); font-size: 0.9rem;">
+                            <option value="">Tous les auteurs</option>
+                            {% for author in authors %}
+                            <option value="{{ author.id }}" {% if current_author == author.id|stringformat:"s" %}selected{% endif %}>
+                                {{ author.first_name }} {{ author.last_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <hr style="border-color: var(--divider);">
+
+                    <!-- Prix -->
+                    <div>
+                        <h4 style="font-weight: 600; margin-bottom: var(--s-3);">Prix (DH)</h4>
+                        <div style="display: flex; gap: var(--s-2);">
+                            <input type="number" name="min_price" placeholder="Min" value="{{ min_price }}" 
+                                style="width: 50%; padding: var(--s-2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--background); color: var(--text);">
+                            <input type="number" name="max_price" placeholder="Max" value="{{ max_price }}" 
+                                style="width: 50%; padding: var(--s-2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--background); color: var(--text);">
+                        </div>
+                    </div>
+
+                    <hr style="border-color: var(--divider);">
+
+                    <!-- Notation -->
+                    <div>
+                        <h4 style="font-weight: 600; margin-bottom: var(--s-3);">Notation</h4>
+                        <select name="min_rating" style="width: 100%; padding: var(--s-2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--background); color: var(--text); font-size: 0.9rem;">
+                            <option value="">Toutes les notes</option>
+                            <option value="1" {% if min_rating == "1" %}selected{% endif %}>1+ ⭐</option>
+                            <option value="2" {% if min_rating == "2" %}selected{% endif %}>2+ ⭐</option>
+                            <option value="3" {% if min_rating == "3" %}selected{% endif %}>3+ ⭐</option>
+                            <option value="4" {% if min_rating == "4" %}selected{% endif %}>4+ ⭐</option>
+                            <option value="5" {% if min_rating == "5" %}selected{% endif %}>5 ⭐</option>
+                        </select>
+                    </div>
+
+                    <hr style="border-color: var(--divider);">
+
+                    <!-- Année -->
+                    <div>
+                        <h4 style="font-weight: 600; margin-bottom: var(--s-3);">Année</h4>
+                        <select name="year" style="width: 100%; padding: var(--s-2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--background); color: var(--text); font-size: 0.9rem;">
+                            <option value="">Toutes les années</option>
+                            {% for y in available_years %}
+                            <option value="{{ y }}" {% if current_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <hr style="border-color: var(--divider);">
+
+                    <!-- Langue -->
+                    <div>
+                        <h4 style="font-weight: 600; margin-bottom: var(--s-3);">Langue</h4>
+                        <select name="language" style="width: 100%; padding: var(--s-2); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--background); color: var(--text); font-size: 0.9rem;">
+                            <option value="">Toutes les langues</option>
+                            {% for lang in available_languages %}
+                            <option value="{{ lang }}" {% if current_language == lang %}selected{% endif %}>{{ lang }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <hr style="border-color: var(--divider);">
+
+                    <!-- Buttons -->
+                    <button type="submit" style="width: 100%; padding: var(--s-3); background: var(--primary); color: white; border: none; border-radius: var(--r-md); cursor: pointer; font-weight: 600;">Appliquer</button>
+                    <a href="{% url 'catalog:books_list' %}" style="text-align: center; padding: var(--s-3); background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--r-md); cursor: pointer; text-decoration: none; color: var(--text);">Réinitialiser</a>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Search -->
+            <div style="margin-bottom: var(--s-8);">
+                <form method="get" class="search-box" style="display: flex; gap: var(--s-3);">
+                    <div style="flex: 1;">
+                        <input type="text" name="q" placeholder="Chercher un livre, auteur..." value="{{ request.GET.q }}" style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
+                    </div>
+                    <select name="sort" style="padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
+                        <option value="">Trier par</option>
+                        <option value="newest">Récent</option>
+                        <option value="popular">Populaire</option>
+                        <option value="price_low">Prix: Bas</option>
+                        <option value="price_high">Prix: Haut</option>
+                        <option value="rating">Note</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Books Grid -->
+            {% if books %}
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-6);">
+                    {% for book in books %}
+                    <div class="card" style="overflow: hidden;">
+                        <img src="{{ book.cover_image }}" alt="{{ book.title }}" style="width: 100%; height: 250px; object-fit: cover;">
+                        <div style="padding: var(--s-4);">
+                            <h3 style="font-family: var(--font-display); font-weight: 600; margin-bottom: var(--s-1);">{{ book.title }}</h3>
+                            <p style="color: var(--text-2); font-size: var(--text-sm); margin-bottom: var(--s-3);">{{ book.author.first_name }} {{ book.author.last_name }}</p>
+                            
+                            <div style="display: flex; align-items: center; gap: var(--s-2); margin-bottom: var(--s-3);">
+                                {% if book.rating %}
+                                    <span>{{ book.rating|floatformat:1 }}⭐</span>
+                                    <span style="color: var(--text-2); font-size: var(--text-sm);">({{ book.reviews.count }})</span>
+                                {% endif %}
+                            </div>
+
+                            <div style="display: flex; gap: var(--s-2); margin-bottom: var(--s-3);">
+                                {% if book.is_available_for_borrow %}
+                                <span style="padding: var(--s-2) var(--s-3); background: var(--success); color: white; border-radius: var(--r-md); font-size: var(--text-xs); font-weight: 600;">EMPRUNT</span>
+                                {% endif %}
+                                {% if book.is_available_for_sale %}
+                                <span style="padding: var(--s-2) var(--s-3); background: var(--primary); color: white; border-radius: var(--r-md); font-size: var(--text-xs); font-weight: 600;">VENTE</span>
+                                {% endif %}
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2);">
+                                <a href="{% url 'catalog:book_detail' book.slug %}" class="btn btn-ghost btn-sm">
+                                    <i class="fas fa-eye"></i> Voir
+                                </a>
+                                <button onclick="addToCart({{ book.id }})" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-cart-plus"></i> Panier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div style="display: flex; justify-content: center; gap: var(--s-3); margin-top: var(--s-12);">
+                    {% if page_obj.has_previous %}
+                    <a href="?page=1" class="btn btn-ghost">«</a>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-ghost">‹</a>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <button class="btn btn-primary">{{ num }}</button>
+                        {% else %}
+                        <a href="?page={{ num }}" class="btn btn-ghost">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-ghost">›</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-ghost">»</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="card" style="padding: var(--s-12); text-align: center;">
+                    <p style="color: var(--text-2);">Aucun livre trouvé.</p>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}

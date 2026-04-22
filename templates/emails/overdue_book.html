@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .header { background: #b91c1c; color: white; padding: 20px; text-align: center; }
+        .content { background: white; padding: 20px; margin: 10px 0; }
+        .footer { text-align: center; color: #666; font-size: 12px; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ Livre En Retard</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour {{ user.first_name }},</p>
+            <p style="color: #b91c1c;"><strong>Vous avez un livre en retard!</strong></p>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <th style="text-align: left; padding: 10px;">Titre</th>
+                    <th style="text-align: left; padding: 10px;">Date de Retour</th>
+                    <th style="text-align: left; padding: 10px;">Jours de Retard</th>
+                </tr>
+                {% for borrow in overdue_books %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px;">{{ borrow.book.title }}</td>
+                    <td style="padding: 10px;">{{ borrow.due_date|date:"d/m/Y" }}</td>
+                    <td style="padding: 10px; color: #b91c1c;"><strong>{{ borrow.days_overdue }} jours</strong></td>
+                </tr>
+                {% endfor %}
+            </table>
+            <p>Veuillez retourner le livre dès que possible pour éviter des frais supplémentaires.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 BiblioNUM - Bibliothèque Digitale. Tous droits réservés.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ma Liste de Souhaits{% endblock %}
+
+{% block content %}
+<div class="wishlist-container">
+    <div class="page-header">
+        <h1>🎁 Ma Liste de Souhaits</h1>
+        <p class="text-muted">{{ total_items }} livre(s) - Valeur totale: <strong>{{ total_value|floatformat:2 }} €</strong></p>
+    </div>
+
+    {% if items %}
+    <div class="wishlist-stats">
+        <div class="stat-card">
+            <span class="stat-label">Total d'articles</span>
+            <span class="stat-value">{{ total_items }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Valeur totale</span>
+            <span class="stat-value">{{ total_value|floatformat:2 }} €</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Priorité élevée</span>
+            <span class="stat-value">{{ items|dictsort:"priority"|length }}</span>
+        </div>
+    </div>
+
+    <div class="wishlist-items">
+        <table class="wishlist-table">
+            <thead>
+                <tr>
+                    <th>Livre</th>
+                    <th>Auteur</th>
+                    <th>Prix</th>
+                    <th>Priorité</th>
+                    <th>Ajouté le</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr class="wishlist-row" data-item-id="{{ item.id }}">
+                    <td>
+                        <a href="{% url 'catalog:book_detail' item.book.slug %}" class="book-link">
+                            {{ item.book.title }}
+                        </a>
+                    </td>
+                    <td>{{ item.book.author.first_name }} {{ item.book.author.last_name }}</td>
+                    <td class="price">{{ item.book.price }} €</td>
+                    <td>
+                        <form method="post" action="{% url 'catalog:update_wishlist_priority' item.id %}" class="priority-form">
+                            {% csrf_token %}
+                            <select name="priority" onchange="this.form.submit()" class="priority-select">
+                                <option value="0" {% if item.priority == 0 %}selected{% endif %}>📌 Basse</option>
+                                <option value="1" {% if item.priority == 1 %}selected{% endif %}>📍 Normale</option>
+                                <option value="2" {% if item.priority == 2 %}selected{% endif %}>🔴 Haute</option>
+                            </select>
+                        </form>
+                    </td>
+                    <td class="date">{{ item.added_at|date:"d/m/Y" }}</td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'cart:add_to_cart' item.book.id %}" class="btn-small btn-primary">
+                                🛒 Ajouter au panier
+                            </a>
+                            <form method="post" action="{% url 'catalog:remove_from_wishlist' item.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-small btn-danger" onclick="return confirm('Supprimer de votre wishlist?')">
+                                    ❌ Supprimer
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h2>Votre wishlist est vide</h2>
+        <p>Commencez par ajouter des livres à votre liste de souhaits!</p>
+        <a href="{% url 'catalog:books_list' %}" class="btn btn-primary">
+            Parcourir les livres
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.wishlist-container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--primary-color, #007bff);
+    padding-bottom: 1rem;
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.page-header .text-muted {
+    font-size: 0.95rem;
+    color: #6c757d;
+}
+
+.wishlist-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.wishlist-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.wishlist-table thead {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.wishlist-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+}
+
+.wishlist-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.wishlist-row:hover {
+    background-color: #f8f9fa;
+}
+
+.book-link {
+    color: var(--primary-color, #007bff);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.book-link:hover {
+    text-decoration: underline;
+}
+
+.price {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 1.1rem;
+}
+
+.priority-select {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+}
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background-color: var(--primary-color, #007bff);
+    color: white;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    opacity: 0.9;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h2 {
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.empty-state p {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background-color: var(--primary-color, #007bff);
+    color: white;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .wishlist-table {
+        font-size: 0.9rem;
+    }
+
+    .wishlist-table th,
+    .wishlist-table td {
+        padding: 0.75rem;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+
+    .btn-small {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
