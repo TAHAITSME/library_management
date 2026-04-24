@@ -24,7 +24,7 @@
                 {% csrf_token %}
 
                 <div>
-                    <label for="id_username" style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Nom d'utilisateur</label>
+                    <label for="id_username" style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Nom d'utilisateur ou email</label>
                     <input type="text" name="username" id="id_username" required style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
                     {% if form.username.errors %}
                         <p style="color: var(--danger); font-size: var(--text-sm); margin-top: var(--s-1);">{{ form.username.errors }}</p>
@@ -37,6 +37,10 @@
                     {% if form.password.errors %}
                         <p style="color: var(--danger); font-size: var(--text-sm); margin-top: var(--s-1);">{{ form.password.errors }}</p>
                     {% endif %}
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--s-4);">
+                    <a href="{% url 'accounts:password_reset' %}" style="font-size: var(--text-sm); color: var(--primary); font-weight: 600;">Mot de passe oublié ?</a>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-lg btn-full">

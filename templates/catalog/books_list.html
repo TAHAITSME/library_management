@@ -118,15 +118,16 @@
             <div style="margin-bottom: var(--s-8);">
                 <form method="get" class="search-box" style="display: flex; gap: var(--s-3);">
                     <div style="flex: 1;">
-                        <input type="text" name="q" placeholder="Chercher un livre, auteur..." value="{{ request.GET.q }}" style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
+                        <input type="text" name="q" placeholder="Chercher un livre, auteur..." value="{{ query }}" style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
                     </div>
                     <select name="sort" style="padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md);">
                         <option value="">Trier par</option>
-                        <option value="newest">Récent</option>
-                        <option value="popular">Populaire</option>
-                        <option value="price_low">Prix: Bas</option>
-                        <option value="price_high">Prix: Haut</option>
-                        <option value="rating">Note</option>
+                        <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Récent</option>
+                        <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Ancien</option>
+                        <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Populaire</option>
+                        <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Prix: Bas</option>
+                        <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Prix: Haut</option>
+                        <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Note</option>
                     </select>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i>
@@ -177,21 +178,21 @@
                 {% if is_paginated %}
                 <div style="display: flex; justify-content: center; gap: var(--s-3); margin-top: var(--s-12);">
                     {% if page_obj.has_previous %}
-                    <a href="?page=1" class="btn btn-ghost">«</a>
-                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-ghost">‹</a>
+                    <a href="?page=1{% if current_params %}&{{ current_params }}{% endif %}" class="btn btn-ghost">«</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if current_params %}&{{ current_params }}{% endif %}" class="btn btn-ghost">‹</a>
                     {% endif %}
 
                     {% for num in page_obj.paginator.page_range %}
                         {% if page_obj.number == num %}
                         <button class="btn btn-primary">{{ num }}</button>
                         {% else %}
-                        <a href="?page={{ num }}" class="btn btn-ghost">{{ num }}</a>
+                        <a href="?page={{ num }}{% if current_params %}&{{ current_params }}{% endif %}" class="btn btn-ghost">{{ num }}</a>
                         {% endif %}
                     {% endfor %}
 
                     {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-ghost">›</a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-ghost">»</a>
+                    <a href="?page={{ page_obj.next_page_number }}{% if current_params %}&{{ current_params }}{% endif %}" class="btn btn-ghost">›</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if current_params %}&{{ current_params }}{% endif %}" class="btn btn-ghost">»</a>
                     {% endif %}
                 </div>
                 {% endif %}

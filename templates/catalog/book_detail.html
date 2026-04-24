@@ -18,12 +18,12 @@
                     {% endif %}
 
                     {% if book.is_available_for_sale %}
-                    <button onclick="addToCart({{ book.id }})" class="btn btn-primary btn-lg">
+                    <button onclick="addToCart({{ book.id }})" class="btn btn-primary btn-lg" type="button">
                         <i class="fas fa-shopping-cart"></i> Ajouter au Panier
                     </button>
                     {% endif %}
 
-                    <button class="btn btn-ghost btn-lg">
+                    <button onclick="reserveBook({{ book.id }})" class="btn btn-ghost btn-lg" type="button">
                         <i class="fas fa-bookmark"></i> Réserver
                     </button>
                 </div>
@@ -94,7 +94,7 @@
                         </div>
                         <div style="margin-bottom: var(--s-4);">
                             <label style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Commentaire</label>
-                            <textarea name="content" style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md); min-height: 120px;"></textarea>
+                            <textarea name="comment" style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md); min-height: 120px;"></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary">Poster l'avis</button>
                     </form>

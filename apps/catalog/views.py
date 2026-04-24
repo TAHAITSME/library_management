@@ -59,14 +59,14 @@ def books_list_view(request):
     authors = Author.objects.all()
     
     # Filtre recherche
-    search = request.GET.get('search', '')
-    if search:
+    query = request.GET.get('q', request.GET.get('search', ''))
+    if query:
         books = books.filter(
-            Q(title__icontains=search) |
-            Q(description__icontains=search) |
-            Q(author__first_name__icontains=search) |
-            Q(author__last_name__icontains=search) |
-            Q(isbn__icontains=search)
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(author__first_name__icontains=query) |
+            Q(author__last_name__icontains=query) |
+            Q(isbn__icontains=query)
         ).distinct()
 
     # Filtre prix
@@ -116,11 +116,19 @@ def books_list_view(request):
         books = books.filter(language=language)
 
     # Tri
-    sort = request.GET.get('sort', '-created_at')
-    valid_sorts = ['-created_at', 'created_at', 'title', '-title', 'price', '-price', '-rating']
-    if sort not in valid_sorts:
-        sort = '-created_at'
-    books = books.order_by(sort)
+    sort = request.GET.get('sort', 'newest')
+    sort_map = {
+        'newest': '-created_at',
+        'oldest': 'created_at',
+        'title': 'title',
+        'title_desc': '-title',
+        'price_low': 'price',
+        'price_high': '-price',
+        'rating': '-rating',
+        'popular': '-rating',
+    }
+    order = sort_map.get(sort, '-created_at')
+    books = books.order_by(order)
 
     # Pagination
     paginator = Paginator(books, 12)
@@ -142,6 +150,10 @@ def books_list_view(request):
         available_books.values_list('language', flat=True)
     ))
 
+    current_params = request.GET.copy()
+    if 'page' in current_params:
+        current_params.pop('page')
+
     context = {
         'page_obj': page_obj,
         'books': page_obj.object_list,
@@ -154,11 +166,13 @@ def books_list_view(request):
         'current_year': year,
         'current_language': language,
         'current_sort': sort,
-        'search': search,
+        'query': query,
         'min_price': min_price,
         'max_price': max_price,
         'min_rating': min_rating,
         'books_count': paginator.count,
+        'is_paginated': page_obj.has_other_pages(),
+        'current_params': current_params.urlencode(),
     }
     return render(request, 'catalog/books_list.html', context)
 
@@ -245,7 +259,11 @@ def add_review_view(request, book_id):
     review, created = Review.objects.get_or_create(user=request.user, book=book)
 
     if request.method == 'POST':
-        form = ReviewForm(request.POST, instance=review)
+        post_data = request.POST.copy()
+        if 'content' in post_data and 'comment' not in post_data:
+            post_data['comment'] = post_data.get('content', '')
+
+        form = ReviewForm(post_data, instance=review)
         if form.is_valid():
             review = form.save(commit=False)
             # Ensure rating is set before saving
