@@ -357,3 +357,5 @@ Projet académique - PFA 2024-2025
 **Status** : ✅ Production Ready (pour un PFA)  
 **Version** : 1.0  
 **Dernière mise à jour** : Avril 2024
+#   l i b r a r y _ m a n a g e m e n t  
+ 
