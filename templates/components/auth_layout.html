@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <div class="auth-panel">
+        <a href="{% url 'home' %}" class="app-brand auth-brand">
+            <span class="app-brand__mark"><i class="fas fa-book-open"></i></span>
+            <span class="app-brand__text">BiblioNUM</span>
+        </a>
+        {% block auth_content %}{% endblock %}
+    </div>
+    <aside class="auth-aside">
+        <p class="eyebrow">Bibliotheque connectee</p>
+        <h1>Une experience simple pour lire, acheter, reserver et suivre vos livres.</h1>
+        <div class="auth-aside__stats">
+            <span><strong>24/7</strong> Catalogue accessible</span>
+            <span><strong>Admin</strong> Backoffice complet</span>
+            <span><strong>PDF</strong> Factures pretes</span>
+        </div>
+    </aside>
+</section>
+{% endblock %}

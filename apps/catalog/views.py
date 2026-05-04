@@ -85,12 +85,12 @@ def books_list_view(request):
 
     # Filtre catégorie
     category_id = request.GET.get('category')
-    if category_id:
+    if category_id and category_id.isdigit():
         books = books.filter(category_id=category_id)
 
     # Filtre auteur (NEW)
     author_id = request.GET.get('author')
-    if author_id:
+    if author_id and author_id.isdigit():
         books = books.filter(author_id=author_id)
 
     # Filtre rating
@@ -242,7 +242,16 @@ def search_books_view(request):
             Q(author__last_name__icontains=query)
         ).distinct().select_related('author', 'category')
 
-        sort = request.GET.get('sort', '-created_at')
+        sort_map = {
+            'newest': '-created_at',
+            'oldest': 'created_at',
+            'title': 'title',
+            'price_low': 'price',
+            'price_high': '-price',
+            'rating': '-rating',
+            '-created_at': '-created_at',
+        }
+        sort = sort_map.get(request.GET.get('sort', 'newest'), '-created_at')
         books = books.order_by(sort)
 
     context = {
@@ -256,7 +265,7 @@ def search_books_view(request):
 @login_required
 def add_review_view(request, book_id):
     book = get_object_or_404(Book, id=book_id)
-    review, created = Review.objects.get_or_create(user=request.user, book=book)
+    review = Review.objects.filter(user=request.user, book=book).first()
 
     if request.method == 'POST':
         post_data = request.POST.copy()
@@ -266,6 +275,8 @@ def add_review_view(request, book_id):
         form = ReviewForm(post_data, instance=review)
         if form.is_valid():
             review = form.save(commit=False)
+            review.user = request.user
+            review.book = book
             # Ensure rating is set before saving
             if not review.rating:
                 messages.error(request, 'Veuillez sélectionner une note.')

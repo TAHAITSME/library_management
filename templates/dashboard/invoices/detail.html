@@ -1,0 +1,30 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}Facture {{ invoice.invoice_number }}{% endblock %}
+
+{% block dashboard_content %}
+<section class="dashboard-panel invoice-box">
+    <div class="invoice-head">
+        <div>
+            <h2>BiblioNUM</h2>
+            <p>Facture liee a la commande {{ invoice.order.order_number }}</p>
+        </div>
+        <strong>{{ invoice.created_at|date:"d/m/Y" }}</strong>
+    </div>
+    <dl class="detail-list">
+        <dt>Client</dt><dd>{{ invoice.order.user }}</dd>
+        <dt>Adresse</dt><dd>{{ invoice.billing_address|linebreaksbr }}</dd>
+    </dl>
+    <div class="table-wrap">
+        <table class="dashboard-table">
+            <thead><tr><th>Livre</th><th>Quantite</th><th>Prix</th><th>Total</th></tr></thead>
+            <tbody>
+            {% for item in invoice.order.items.all %}
+                <tr><td>{{ item.book.title }}</td><td>{{ item.quantity }}</td><td>{{ item.price }} DH</td><td>{{ item.get_total }} DH</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="invoice-total">Total : {{ invoice.order.total }} DH</p>
+</section>
+{% endblock %}

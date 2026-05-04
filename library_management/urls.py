@@ -5,10 +5,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic import TemplateView
+
+from .views import HomeView
 
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='home.html'), name='home'),
+    path('', HomeView.as_view(), name='home'),
     path('admin/', admin.site.urls),
     path('accounts/', include('apps.accounts.urls')),
     path('catalog/', include('apps.catalog.urls')),
@@ -16,6 +17,7 @@ urlpatterns = [
     path('orders/', include('apps.orders.urls')),
     path('borrowing/', include('apps.borrowing.urls')),
     path('reservations/', include('apps.reservations.urls')),
+    path('dashboard/', include('apps.dashboard.urls')),
 ]
 
 if settings.DEBUG:

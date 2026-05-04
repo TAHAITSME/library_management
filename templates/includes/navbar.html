@@ -1,0 +1,84 @@
+<nav class="app-navbar" data-navbar>
+    <div class="app-container app-navbar__inner">
+        <a href="{% url 'home' %}" class="app-brand" aria-label="BiblioNUM">
+            <span class="app-brand__mark"><i class="fas fa-book-open"></i></span>
+            <span class="app-brand__text">BiblioNUM</span>
+        </a>
+
+        <button class="icon-btn app-navbar__toggle" id="mobileToggle" type="button" aria-label="Menu" aria-expanded="false">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <div class="app-navbar__menu" id="mobileMenu">
+            <a href="{% url 'home' %}" class="nav-link {% if request.path == '/' %}is-active{% endif %}">
+                <i class="fas fa-house"></i> Accueil
+            </a>
+            <a href="{% url 'catalog:books_list' %}" class="nav-link {% if 'catalog' in request.path %}is-active{% endif %}">
+                <i class="fas fa-book-open"></i> Catalogue
+            </a>
+
+            {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+                <a href="{% url 'orders:orders_list' %}" class="nav-link {% if 'orders' in request.path %}is-active{% endif %}">
+                    <i class="fas fa-receipt"></i> Commandes
+                </a>
+                <a href="{% url 'borrowing:borrow_list' %}" class="nav-link {% if 'borrowing' in request.path %}is-active{% endif %}">
+                    <i class="fas fa-hand-holding-heart"></i> Emprunts
+                </a>
+                <a href="{% url 'reservations:list' %}" class="nav-link {% if 'reservations' in request.path %}is-active{% endif %}">
+                    <i class="fas fa-bookmark"></i> Reservations
+                </a>
+            {% endif %}
+
+            {% if user.is_authenticated and user.is_staff or user.is_authenticated and user.is_superuser %}
+                <a href="{% url 'dashboard:index' %}" class="nav-link {% if 'dashboard' in request.path %}is-active{% endif %}">
+                    <i class="fas fa-gauge-high"></i> Admin
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="app-navbar__actions">
+            <form action="{% url 'catalog:search' %}" method="get" class="app-search">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="search" name="q" placeholder="Rechercher un livre..." value="{{ request.GET.q }}">
+            </form>
+
+            {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+                <a href="{% url 'cart:cart' %}" class="icon-btn" aria-label="Panier">
+                    <i class="fas fa-shopping-cart"></i>
+                    {% if user.cart %}
+                        {% with count=user.cart.get_item_count %}
+                            {% if count > 0 %}<span class="count-badge">{{ count }}</span>{% endif %}
+                        {% endwith %}
+                    {% endif %}
+                </a>
+            {% endif %}
+
+            <button class="icon-btn" data-theme-toggle type="button" aria-label="Theme">
+                <i class="fas fa-moon"></i>
+            </button>
+
+            {% if user.is_authenticated %}
+                <div class="dropdown">
+                    <button class="avatar-btn" type="button" data-dropdown-toggle="userDropdown" aria-label="Menu utilisateur">
+                        <span>{{ user.first_name|first|default:user.username|first|upper }}</span>
+                    </button>
+                    <div id="userDropdown" class="dropdown-menu" data-dropdown>
+                        {% if user.is_staff or user.is_superuser %}
+                            <a href="{% url 'dashboard:index' %}"><i class="fas fa-gauge-high"></i> Dashboard admin</a>
+                            <a href="/admin/"><i class="fas fa-shield-halved"></i> Django admin</a>
+                        {% else %}
+                            <a href="{% url 'accounts:account' %}"><i class="fas fa-chart-pie"></i> Espace client</a>
+                            <a href="{% url 'accounts:profile' %}"><i class="fas fa-id-card"></i> Profil</a>
+                        {% endif %}
+                        <form method="post" action="{% url 'accounts:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit"><i class="fas fa-arrow-right-from-bracket"></i> Deconnexion</button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm">Connexion</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>

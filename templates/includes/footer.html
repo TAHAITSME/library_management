@@ -1,0 +1,30 @@
+<footer class="app-footer">
+    <div class="app-container app-footer__grid">
+        <section>
+            <a href="{% url 'home' %}" class="app-brand app-footer__brand">
+                <span class="app-brand__mark"><i class="fas fa-book-open"></i></span>
+                <span class="app-brand__text">BiblioNUM</span>
+            </a>
+            <p>Plateforme de gestion de bibliotheque, d'emprunts et de vente de livres.</p>
+        </section>
+        <section>
+            <h2>Navigation</h2>
+            <a href="{% url 'home' %}">Accueil</a>
+            <a href="{% url 'catalog:books_list' %}">Catalogue</a>
+            {% if user.is_authenticated %}<a href="{% url 'accounts:account' %}">Mon espace</a>{% endif %}
+        </section>
+        <section>
+            <h2>Compte</h2>
+            {% if user.is_authenticated %}
+                <a href="{% url 'accounts:profile' %}">Profil</a>
+                <a href="{% url 'orders:orders_list' %}">Commandes</a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}">Connexion</a>
+                <a href="{% url 'accounts:register' %}">Inscription</a>
+            {% endif %}
+        </section>
+    </div>
+    <div class="app-container app-footer__bottom">
+        <span>&copy; 2026 BiblioNUM. Tous droits reserves.</span>
+    </div>
+</footer>

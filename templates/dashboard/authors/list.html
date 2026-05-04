@@ -1,0 +1,29 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}Auteurs{% endblock %}
+{% block dashboard_actions %}<a class="btn btn-primary" href="{% url 'dashboard:author_add' %}"><i class="fas fa-plus"></i> Auteur</a>{% endblock %}
+
+{% block dashboard_content %}
+<section class="dashboard-panel">
+    <div class="table-wrap">
+        <table class="dashboard-table">
+            <thead><tr><th>Auteur</th><th>Nationalite</th><th>Site</th><th></th></tr></thead>
+            <tbody>
+            {% for author in authors %}
+                <tr>
+                    <td><strong>{{ author }}</strong><small>{{ author.biography|truncatechars:80 }}</small></td>
+                    <td>{{ author.nationality|default:"-" }}</td>
+                    <td>{% if author.website %}<a href="{{ author.website }}">{{ author.website }}</a>{% else %}-{% endif %}</td>
+                    <td class="row-actions">
+                        <a href="{% url 'dashboard:author_edit' author.pk %}"><i class="fas fa-pen"></i></a>
+                        <a href="{% url 'dashboard:author_delete' author.pk %}"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="empty-state">Aucun auteur.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

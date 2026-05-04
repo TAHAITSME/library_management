@@ -1,46 +1,16 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Confirmer l'Annulation - BiblioNUM{% endblock %}
+{% block title %}Annuler la reservation | BiblioNUM{% endblock %}
 
 {% block content %}
-<div class="container container--narrow" style="margin-top: 40px;">
-    <div class="card" style="padding: 30px; text-align: center;">
-        <h1 class="lib-hero__title">⚠️ Confirmer l'Annulation</h1>
-        <p style="color: var(--text-2); font-size: var(--text-lg); margin: 20px 0;">
-            Êtes-vous sûr de vouloir annuler cette réservation?
-        </p>
-        
-        <div style="background: var(--surface-offset); padding: 20px; border-radius: var(--r-lg); margin: 30px 0; text-align: left;">
-            <p><strong>Livre:</strong> {{ reservation.book.title }}</p>
-            <p><strong>Auteur:</strong> {{ reservation.book.author }}</p>
-            <p><strong>Date de réservation:</strong> {{ reservation.created_at|date:"d/m/Y" }}</p>
-            <p><strong>Statut:</strong> 
-                {% if reservation.status == 'pending' %}
-                    <span style="color: var(--warning);">En attente</span>
-                {% elif reservation.status == 'ready' %}
-                    <span style="color: var(--success);">Prêt</span>
-                {% elif reservation.status == 'cancelled' %}
-                    <span style="color: var(--danger);">Annulé</span>
-                {% endif %}
-            </p>
-        </div>
-
-        <div style="display: flex; gap: 15px; justify-content: center;">
-            <form method="post" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger" style="background: var(--danger);">
-                    Oui, Annuler la Réservation
-                </button>
-            </form>
-            <a href="{% url 'reservations:detail' reservation.id %}" class="btn btn-secondary">
-                Non, Garder la Réservation
-            </a>
-        </div>
-
-        <p style="color: var(--text-3); font-size: var(--text-sm); margin-top: 30px;">
-            Cette action ne peut pas être annulée. Vous pourrez créer une nouvelle réservation ultérieurement.
-        </p>
-    </div>
-</div>
+<section class="form-card">
+    <p class="eyebrow">Confirmation</p>
+    <h1>Annuler cette reservation ?</h1>
+    <p>{{ reservation.book.title }} par {{ reservation.book.author }}</p>
+    <form method="post" class="form-row-between">
+        {% csrf_token %}
+        <a href="{% url 'reservations:detail' reservation.pk %}" class="btn btn-ghost">Garder</a>
+        <button type="submit" class="btn btn-danger">Annuler la reservation</button>
+    </form>
+</section>
 {% endblock %}

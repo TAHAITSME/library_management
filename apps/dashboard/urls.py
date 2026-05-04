@@ -1,0 +1,41 @@
+from django.urls import path
+
+from . import views
+
+app_name = 'dashboard'
+
+urlpatterns = [
+    path('', views.DashboardHomeView.as_view(), name='index'),
+    path('books/', views.BookListView.as_view(), name='books'),
+    path('books/add/', views.BookCreateView.as_view(), name='book_add'),
+    path('books/<int:pk>/edit/', views.BookUpdateView.as_view(), name='book_edit'),
+    path('books/<int:pk>/delete/', views.BookDeleteView.as_view(), name='book_delete'),
+    path('categories/', views.CategoryListView.as_view(), name='categories'),
+    path('categories/add/', views.CategoryCreateView.as_view(), name='category_add'),
+    path('categories/<int:pk>/edit/', views.CategoryUpdateView.as_view(), name='category_edit'),
+    path('categories/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category_delete'),
+    path('authors/', views.AuthorListView.as_view(), name='authors'),
+    path('authors/add/', views.AuthorCreateView.as_view(), name='author_add'),
+    path('authors/<int:pk>/edit/', views.AuthorUpdateView.as_view(), name='author_edit'),
+    path('authors/<int:pk>/delete/', views.AuthorDeleteView.as_view(), name='author_delete'),
+    path('stock/', views.StockListView.as_view(), name='stock'),
+    path('stock/<int:pk>/edit/', views.StockUpdateView.as_view(), name='stock_edit'),
+    path('orders/', views.OrderListView.as_view(), name='orders'),
+    path('orders/<int:pk>/', views.OrderDetailView.as_view(), name='order_detail'),
+    path('orders/<int:pk>/edit/', views.OrderUpdateView.as_view(), name='order_edit'),
+    path('orders/<int:order_pk>/invoice/generate/', views.generate_invoice, name='invoice_generate'),
+    path('payments/', views.PaymentListView.as_view(), name='payments'),
+    path('payments/<int:pk>/edit/', views.PaymentUpdateView.as_view(), name='payment_edit'),
+    path('invoices/', views.InvoiceListView.as_view(), name='invoices'),
+    path('invoices/add/', views.InvoiceCreateView.as_view(), name='invoice_add'),
+    path('invoices/<int:pk>/', views.InvoiceDetailView.as_view(), name='invoice_detail'),
+    path('borrows/', views.BorrowListView.as_view(), name='borrows'),
+    path('borrows/<int:pk>/edit/', views.BorrowUpdateView.as_view(), name='borrow_edit'),
+    path('borrows/<int:pk>/return/', views.mark_borrow_returned, name='borrow_return'),
+    path('reservations/', views.ReservationListView.as_view(), name='reservations'),
+    path('reservations/<int:pk>/edit/', views.ReservationUpdateView.as_view(), name='reservation_edit'),
+    path('reservations/<int:pk>/<str:action>/', views.reservation_action, name='reservation_action'),
+    path('users/', views.UserListView.as_view(), name='users'),
+    path('users/<int:pk>/', views.UserDetailView.as_view(), name='user_detail'),
+    path('users/<int:pk>/edit/', views.UserUpdateView.as_view(), name='user_edit'),
+]

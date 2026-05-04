@@ -2,123 +2,445 @@
 
 {% block title %}{{ book.title }} | BiblioNUM{% endblock %}
 
+{% block extra_css %}
+<style>
+  .book-detail-page {
+    display: grid;
+    gap: 28px;
+  }
+
+  .book-detail-hero {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: clamp(24px, 5vw, 54px);
+    align-items: start;
+  }
+
+  .book-cover-panel {
+    position: sticky;
+    top: 88px;
+    overflow: hidden;
+    border: 1px solid var(--app-border);
+    border-radius: 20px;
+    background: var(--app-surface);
+    box-shadow: 0 22px 70px rgb(15 23 42 / 12%);
+  }
+
+  .book-cover-panel__media {
+    position: relative;
+    aspect-ratio: 3 / 4.2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background:
+      linear-gradient(135deg, var(--app-primary-soft), var(--app-surface-soft));
+    color: var(--app-faint);
+  }
+
+  .book-cover-panel__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .book-cover-panel__media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 62%, rgb(0 0 0 / 20%));
+    pointer-events: none;
+  }
+
+  .book-actions {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .book-actions form,
+  .book-actions .btn {
+    width: 100%;
+  }
+
+  .book-actions .btn {
+    min-height: 44px;
+  }
+
+  .book-main-panel {
+    min-width: 0;
+    padding: clamp(22px, 4vw, 38px);
+    border: 1px solid var(--app-border);
+    border-radius: 20px;
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .book-title-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+  }
+
+  .book-main-panel h1 {
+    max-width: 780px;
+    margin: 0;
+    color: var(--app-text);
+    font-size: clamp(2.4rem, 5vw, 5rem);
+    line-height: .96;
+  }
+
+  .book-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 12px;
+    color: var(--app-muted);
+  }
+
+  .book-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .book-status-pill {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding-inline: 13px;
+    border-radius: 999px;
+    background: var(--app-success-soft);
+    color: var(--app-success);
+    font-weight: 900;
+  }
+
+  .book-status-pill.is-unavailable,
+  .book-status-pill.is-discontinued {
+    background: var(--app-danger-soft);
+    color: var(--app-danger);
+  }
+
+  .book-status-pill::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .book-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .book-stat {
+    min-height: 92px;
+    display: grid;
+    align-content: center;
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-lg);
+    background: var(--app-surface-soft);
+  }
+
+  .book-stat span {
+    color: var(--app-muted);
+    font-size: .78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .book-stat strong {
+    color: var(--app-text);
+    font-size: 1.25rem;
+  }
+
+  .book-section {
+    margin-top: 32px;
+  }
+
+  .book-section h2 {
+    margin-bottom: 12px;
+    font-size: clamp(1.35rem, 2.4vw, 2rem);
+  }
+
+  .book-description {
+    max-width: 850px;
+    color: var(--app-muted);
+    font-size: 1.02rem;
+    line-height: 1.75;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .reviews-layout {
+    display: grid;
+    grid-template-columns: minmax(280px, .8fr) minmax(0, 1.2fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .review-form-card,
+  .review-card-modern,
+  .reviews-empty {
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-lg);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .review-form-card {
+    padding: 18px;
+  }
+
+  .rating-picker {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .rating-picker input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .rating-picker label {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    background: var(--app-surface-soft);
+    color: var(--app-muted);
+    cursor: pointer;
+    font-weight: 900;
+  }
+
+  .rating-picker input:checked + label,
+  .rating-picker label:hover {
+    border-color: var(--app-accent);
+    background: var(--app-accent-soft);
+    color: var(--app-accent);
+  }
+
+  .review-form-card textarea {
+    min-height: 130px;
+    resize: vertical;
+  }
+
+  .review-list-modern {
+    display: grid;
+    gap: 12px;
+  }
+
+  .review-card-modern {
+    padding: 16px;
+  }
+
+  .review-card-modern__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .review-card-modern p {
+    margin: 0;
+    color: var(--app-muted);
+    line-height: 1.65;
+  }
+
+  .reviews-empty {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 34px 18px;
+    text-align: center;
+    color: var(--app-muted);
+  }
+
+  .reviews-empty i {
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--app-radius-lg);
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+  }
+
+  @media (max-width: 1080px) {
+    .book-detail-hero,
+    .reviews-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .book-cover-panel {
+      position: static;
+      max-width: 420px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .book-title-row {
+      flex-direction: column;
+    }
+
+    .book-stats,
+    .info-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .rating-picker {
+      grid-template-columns: repeat(5, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .book-stats,
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
-    <div style="display: grid; grid-template-columns: 300px 1fr; gap: var(--s-8);">
-        <!-- Cover & Actions -->
-        <aside>
-            <img src="{{ book.cover_image }}" alt="{{ book.title }}" style="width: 100%; border-radius: var(--r-xl); margin-bottom: var(--s-6);">
-            
-            <div class="card" style="padding: var(--s-6);">
-                <div style="display: flex; flex-direction: column; gap: var(--s-3);">
-                    {% if book.is_available_for_borrow %}
-                    <button onclick="borrowBook({{ book.id }})" class="btn btn-success btn-lg">
-                        <i class="fas fa-hand-holding-heart"></i> Emprunter
-                    </button>
-                    {% endif %}
-
-                    {% if book.is_available_for_sale %}
-                    <button onclick="addToCart({{ book.id }})" class="btn btn-primary btn-lg" type="button">
-                        <i class="fas fa-shopping-cart"></i> Ajouter au Panier
-                    </button>
-                    {% endif %}
-
-                    <button onclick="reserveBook({{ book.id }})" class="btn btn-ghost btn-lg" type="button">
-                        <i class="fas fa-bookmark"></i> Réserver
-                    </button>
-                </div>
+<div class="book-detail-page">
+    <div class="book-detail-hero">
+        <aside class="book-cover-panel">
+            <div class="book-cover-panel__media">
+                {% if book.get_cover_image_url %}
+                    <img src="{{ book.get_cover_image_url }}" alt="{{ book.title }}">
+                {% else %}
+                    <i class="fas fa-book fa-3x"></i>
+                {% endif %}
+            </div>
+            <div class="book-actions">
+                {% if book.is_available %}
+                    <form method="post" action="{% url 'cart:add_to_cart' book.id %}">
+                        {% csrf_token %}
+                        <button class="btn btn-primary" type="submit"><i class="fas fa-cart-plus"></i> Ajouter au panier</button>
+                    </form>
+                    <form method="post" action="{% url 'borrowing:borrow_request' book.id %}">
+                        {% csrf_token %}
+                        <button class="btn btn-secondary" type="submit"><i class="fas fa-hand-holding-heart"></i> Demander un emprunt</button>
+                    </form>
+                {% else %}
+                    <button class="btn btn-secondary" type="button" disabled><i class="fas fa-ban"></i> Indisponible</button>
+                {% endif %}
+                <form method="post" action="{% url 'reservations:create' book.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-ghost" type="submit"><i class="fas fa-bookmark"></i> Reserver</button>
+                </form>
             </div>
         </aside>
 
-        <!-- Details -->
-        <main>
-            <div class="card" style="padding: var(--s-8);">
-                <h1 style="font-family: var(--font-display); font-size: var(--text-2xl); margin-bottom: var(--s-2);">{{ book.title }}</h1>
-                <p style="font-size: var(--text-lg); color: var(--text-2); margin-bottom: var(--s-4);">{{ book.author.first_name }} {{ book.author.last_name }}</p>
-
-                <div style="display: flex; align-items: center; gap: var(--s-4); margin-bottom: var(--s-8); padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md);">
-                    <div>
-                        <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--s-1);">{{ book.rating|default:"N/A" }} ⭐</div>
-                        <div style="color: var(--text-2); font-size: var(--text-sm);">{{ book.reviews.count }} avis</div>
-                    </div>
-                    {% if book.is_available_for_sale %}
-                    <div style="border-left: 1px solid var(--divider); padding-left: var(--s-4);">
-                        <div style="color: var(--text-2); font-size: var(--text-sm);">Prix</div>
-                        <div style="font-size: var(--text-lg); font-weight: 600;">{{ book.price }}.00 DH</div>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: var(--s-4);">Description</h3>
-                <p style="color: var(--text-2); line-height: 1.8; margin-bottom: var(--s-8);">{{ book.description }}</p>
-
-                <hr style="border-color: var(--divider); margin-bottom: var(--s-8);">
-
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-4); margin-bottom: var(--s-8);">
-                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
-                        <div style="color: var(--text-2); font-size: var(--text-sm);">Auteur</div>
-                        <div style="font-weight: 600;">{{ book.author.first_name }} {{ book.author.last_name }}</div>
-                    </div>
-                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
-                        <div style="color: var(--text-2); font-size: var(--text-sm);">Année</div>
-                        <div style="font-weight: 600;">{{ book.publication_date.year }}</div>
-                    </div>
-                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
-                        <div style="color: var(--text-2); font-size: var(--text-sm);">Pages</div>
-                        <div style="font-weight: 600;">{{ book.pages }}</div>
-                    </div>
-                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
-                        <div style="color: var(--text-2); font-size: var(--text-sm);">Catégorie</div>
-                        <div style="font-weight: 600;">{{ book.category.name }}</div>
+        <main class="book-main-panel">
+            <div class="book-title-row">
+                <div>
+                    <p class="eyebrow">{{ book.category.name|default:"Livre" }}</p>
+                    <h1>{{ book.title }}</h1>
+                    <div class="book-meta">
+                        <span><i class="fas fa-user-pen"></i> {{ book.author }}</span>
+                        <span><i class="fas fa-barcode"></i> ISBN {{ book.isbn }}</span>
                     </div>
                 </div>
-
-                <!-- Reviews -->
-                <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: var(--s-4);">Avis ({{ book.reviews.count }})</h3>
-                
-                {% if user.is_authenticated %}
-                <div class="card" style="padding: var(--s-6); margin-bottom: var(--s-6);">
-                    <h4 style="font-weight: 600; margin-bottom: var(--s-4);">Laisser un avis</h4>
-                    <form method="post" action="{% url 'catalog:add_review' book.id %}">
-                        {% csrf_token %}
-                        <div style="margin-bottom: var(--s-4);">
-                            <label style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Note</label>
-                            <select name="rating" required style="padding: var(--s-2); border: 1px solid var(--border); border-radius: var(--r-md);">
-                                <option value="">Sélectionner...</option>
-                                <option value="5">5 ⭐ Excellent</option>
-                                <option value="4">4 ⭐ Bon</option>
-                                <option value="3">3 ⭐ Moyen</option>
-                                <option value="2">2 ⭐ Mauvais</option>
-                                <option value="1">1 ⭐ Très mauvais</option>
-                            </select>
-                        </div>
-                        <div style="margin-bottom: var(--s-4);">
-                            <label style="display: block; font-weight: 600; margin-bottom: var(--s-2);">Commentaire</label>
-                            <textarea name="comment" style="width: 100%; padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--r-md); min-height: 120px;"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Poster l'avis</button>
-                    </form>
-                </div>
-                {% endif %}
-
-                <!-- Reviews List -->
-                <div style="display: flex; flex-direction: column; gap: var(--s-4);">
-                    {% for review in book.reviews.all %}
-                    <div class="card" style="padding: var(--s-4);">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--s-3);">
-                            <div>
-                                <h5 style="font-weight: 600;">{{ review.user.username }}</h5>
-                                <div style="color: var(--primary);">{{ review.rating }} ⭐</div>
-                            </div>
-                            <div style="color: var(--text-2); font-size: var(--text-sm);">{{ review.created_at|date:"d M Y" }}</div>
-                        </div>
-                        <p style="color: var(--text-2);">{{ review.content }}</p>
-                    </div>
-                    {% empty %}
-                    <p style="color: var(--text-2); text-align: center;">Aucun avis encore.</p>
-                    {% endfor %}
-                </div>
+                <span class="book-status-pill is-{{ book.status }}">{{ book.get_status_display }}</span>
             </div>
+
+            <div class="book-stats">
+                <div class="book-stat"><span>Prix</span><strong>{{ book.price }} DH</strong></div>
+                <div class="book-stat"><span>Note</span><strong>{{ book.rating|floatformat:1 }}/5</strong></div>
+                <div class="book-stat"><span>Stock</span><strong>{{ book.available_copies }}/{{ book.total_copies }}</strong></div>
+                <div class="book-stat"><span>Avis</span><strong>{{ book.reviews.count }}</strong></div>
+            </div>
+
+            <section class="book-section">
+                <h2>Description</h2>
+                <p class="book-description">{{ book.description|linebreaksbr }}</p>
+            </section>
+
+            <section class="book-section">
+                <h2>Informations</h2>
+                <div class="info-grid">
+                    <div class="book-stat"><span>Editeur</span><strong>{{ book.publisher }}</strong></div>
+                    <div class="book-stat"><span>Publication</span><strong>{{ book.publication_date|date:"Y" }}</strong></div>
+                    <div class="book-stat"><span>Pages</span><strong>{{ book.pages }}</strong></div>
+                    <div class="book-stat"><span>Langue</span><strong>{{ book.language }}</strong></div>
+                </div>
+            </section>
+
+            <section class="book-section">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Avis lecteurs</p>
+                        <h2>{{ book.reviews.count }} avis</h2>
+                    </div>
+                </div>
+
+                <div class="reviews-layout">
+                    {% if user.is_authenticated %}
+                        <form class="review-form-card" method="post" action="{% url 'catalog:add_review' book.id %}">
+                            {% csrf_token %}
+                            <div class="form-field">
+                                <label>Votre note</label>
+                                <div class="rating-picker">
+                                    {% for value in "12345" %}
+                                        <input type="radio" name="rating" value="{{ value }}" id="rating_{{ value }}" required {% if user_review and user_review.rating|stringformat:'s' == value %}checked{% endif %}>
+                                        <label for="rating_{{ value }}">{{ value }} <i class="fas fa-star"></i></label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label for="id_comment">Commentaire</label>
+                                <textarea class="textarea" id="id_comment" name="comment" placeholder="Partagez votre avis sur ce livre...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+                            </div>
+                            <button class="btn btn-primary" type="submit">Publier l'avis</button>
+                        </form>
+                    {% else %}
+                        <div class="reviews-empty">
+                            <i class="fas fa-lock"></i>
+                            <strong>Connectez-vous pour donner votre avis.</strong>
+                            <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm">Connexion</a>
+                        </div>
+                    {% endif %}
+
+                    <div class="review-list-modern">
+                        {% for review in reviews %}
+                            <article class="review-card-modern">
+                                <div class="review-card-modern__head">
+                                    <strong>{{ review.user.username }}</strong>
+                                    <span class="badge badge-info">{{ review.rating }}/5</span>
+                                </div>
+                                <p>{{ review.comment|default:"Aucun commentaire." }}</p>
+                            </article>
+                        {% empty %}
+                            <div class="reviews-empty">
+                                <i class="fas fa-comment"></i>
+                                <strong>Aucun avis pour le moment.</strong>
+                                <span>Soyez le premier a partager votre avis.</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 </div>

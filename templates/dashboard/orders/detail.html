@@ -1,0 +1,39 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}Commande {{ order.order_number }}{% endblock %}
+{% block dashboard_actions %}
+<a class="btn btn-primary" href="{% url 'dashboard:order_edit' order.pk %}"><i class="fas fa-pen"></i> Modifier</a>
+{% if not invoice %}
+<form method="post" action="{% url 'dashboard:invoice_generate' order.pk %}">
+    {% csrf_token %}
+    <button class="btn btn-ghost" type="submit"><i class="fas fa-file-invoice"></i> Generer facture</button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-grid dashboard-grid-2">
+    <section class="dashboard-panel">
+        <h2>Informations</h2>
+        <dl class="detail-list">
+            <dt>Client</dt><dd>{{ order.user }}</dd>
+            <dt>Date</dt><dd>{{ order.created_at|date:"d/m/Y H:i" }}</dd>
+            <dt>Statut</dt><dd><span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span></dd>
+            <dt>Paiement</dt><dd><span class="badge badge-{{ order.payment_status }}">{{ order.get_payment_status_display }}</span></dd>
+            <dt>Total</dt><dd>{{ order.total }} DH</dd>
+            <dt>Adresse</dt><dd>{{ order.shipping_address|linebreaksbr }}</dd>
+        </dl>
+    </section>
+    <section class="dashboard-panel">
+        <h2>Lignes de commande</h2>
+        {% for item in order.items.all %}
+            <div class="activity-row">
+                <span>{{ item.book.title }}<small>{{ item.quantity }} x {{ item.price }} DH</small></span>
+                <strong>{{ item.get_total }} DH</strong>
+            </div>
+        {% empty %}
+            <p class="empty-state">Aucune ligne.</p>
+        {% endfor %}
+    </section>
+</div>
+{% endblock %}

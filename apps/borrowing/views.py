@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q
 from django.db import transaction
+from django.views.decorators.http import require_POST
 from datetime import timedelta
 import logging
 from .models import Borrow, BorrowRequest
@@ -73,6 +74,7 @@ def borrow_detail_view(request, borrow_id):
 
 
 @login_required
+@require_POST
 def borrow_request_view(request, book_id):
     """Demander un emprunt"""
     book = get_object_or_404(Book, id=book_id)

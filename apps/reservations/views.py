@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
 from datetime import timedelta
 from .models import Reservation, ReservationQueue, ReservationNotification
 from apps.catalog.models import Book
@@ -37,6 +38,7 @@ def reservation_detail(request, pk):
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def create_reservation(request, book_id):
     book = get_object_or_404(Book, pk=book_id)
 

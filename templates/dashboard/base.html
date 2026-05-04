@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block full_width_content %}
+<div class="dashboard-shell">
+    <aside class="dashboard-sidebar">
+        <a class="dashboard-brand" href="{% url 'dashboard:index' %}">
+            <span class="dashboard-brand__mark"><i class="fas fa-book-open"></i></span>
+            <span>Backoffice</span>
+        </a>
+        <nav class="dashboard-nav">
+            <a class="{% if dashboard_section == 'home' %}is-active{% endif %}" href="{% url 'dashboard:index' %}"><i class="fas fa-chart-line"></i> Tableau de bord</a>
+            <a class="{% if dashboard_section == 'books' %}is-active{% endif %}" href="{% url 'dashboard:books' %}"><i class="fas fa-book"></i> Livres</a>
+            <a class="{% if dashboard_section == 'stock' %}is-active{% endif %}" href="{% url 'dashboard:stock' %}"><i class="fas fa-boxes-stacked"></i> Stock</a>
+            <a class="{% if dashboard_section == 'orders' %}is-active{% endif %}" href="{% url 'dashboard:orders' %}"><i class="fas fa-receipt"></i> Commandes</a>
+            <a class="{% if dashboard_section == 'payments' %}is-active{% endif %}" href="{% url 'dashboard:payments' %}"><i class="fas fa-credit-card"></i> Paiements</a>
+            <a class="{% if dashboard_section == 'invoices' %}is-active{% endif %}" href="{% url 'dashboard:invoices' %}"><i class="fas fa-file-invoice"></i> Factures</a>
+            <a class="{% if dashboard_section == 'borrows' %}is-active{% endif %}" href="{% url 'dashboard:borrows' %}"><i class="fas fa-hand-holding-heart"></i> Emprunts</a>
+            <a class="{% if dashboard_section == 'reservations' %}is-active{% endif %}" href="{% url 'dashboard:reservations' %}"><i class="fas fa-bookmark"></i> Reservations</a>
+            <a class="{% if dashboard_section == 'users' %}is-active{% endif %}" href="{% url 'dashboard:users' %}"><i class="fas fa-users"></i> Utilisateurs</a>
+            <a class="{% if dashboard_section == 'categories' %}is-active{% endif %}" href="{% url 'dashboard:categories' %}"><i class="fas fa-tags"></i> Categories</a>
+            <a class="{% if dashboard_section == 'authors' %}is-active{% endif %}" href="{% url 'dashboard:authors' %}"><i class="fas fa-pen-nib"></i> Auteurs</a>
+        </nav>
+    </aside>
+
+    <section class="dashboard-main">
+        <div class="dashboard-topbar">
+            <div>
+                <h1>{% block dashboard_title %}Dashboard admin{% endblock %}</h1>
+                <p class="dashboard-eyebrow">Plateforme BiblioNUM</p>
+            </div>
+            <div class="dashboard-actions">
+                <form class="dashboard-search" method="get" action="{% url 'dashboard:books' %}">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input type="search" name="q" placeholder="Search...">
+                </form>
+                {% block dashboard_actions %}{% endblock %}
+                <a class="dashboard-top-icon" href="{% url 'home' %}" title="Retour au site"><i class="fas fa-arrow-left"></i></a>
+                <span class="dashboard-user-dot">{{ request.user.username|first|upper }}</span>
+            </div>
+        </div>
+        {% block dashboard_content %}{% endblock %}
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% block dashboard_js %}{% endblock %}
+{% endblock %}

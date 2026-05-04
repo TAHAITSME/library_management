@@ -1,93 +1,46 @@
 {% extends 'base.html' %}
 
-{% block title %}Mon Profil | BiblioNUM{% endblock %}
+{% block title %}Mon profil | BiblioNUM{% endblock %}
 
 {% block content %}
-<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
-    <div style="display: grid; grid-template-columns: 1fr 300px; gap: var(--s-8);">
-        <!-- Main Profile Info -->
-        <div>
-            <div class="card" style="padding: var(--s-8); margin-bottom: var(--s-6);">
-                <h1 style="font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--s-2);">{{ user.username }}</h1>
-                <p style="color: var(--text-2); margin-bottom: var(--s-6);">{{ user.email }}</p>
-
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-4);">
-                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
-                        <div style="font-size: 1.5rem; font-weight: 600; color: var(--primary);">{{ stats.borrows }}</div>
-                        <div style="color: var(--text-2); font-size: var(--text-sm);">Emprunts actifs</div>
-                    </div>
-                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
-                        <div style="font-size: 1.5rem; font-weight: 600; color: var(--primary);">{{ stats.reservations }}</div>
-                        <div style="color: var(--text-2); font-size: var(--text-sm);">Réservations</div>
-                    </div>
-                    <div style="padding: var(--s-4); background: var(--surface-raised); border-radius: var(--r-md); text-align: center;">
-                        <div style="font-size: 1.5rem; font-weight: 600; color: var(--primary);">{{ stats.orders }}</div>
-                        <div style="color: var(--text-2); font-size: var(--text-sm);">Commandes</div>
-                    </div>
-                </div>
-
-                <hr style="border-color: var(--divider); margin: var(--s-6) 0;">
-
-                <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: var(--s-4);">Informations Personnelles</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-4);">
-                    <div>
-                        <p style="color: var(--text-2); font-size: var(--text-sm);">Prénom</p>
-                        <p style="font-weight: 600;">{{ user.first_name|default:"Non spécifié" }}</p>
-                    </div>
-                    <div>
-                        <p style="color: var(--text-2); font-size: var(--text-sm);">Nom</p>
-                        <p style="font-weight: 600;">{{ user.last_name|default:"Non spécifié" }}</p>
-                    </div>
-                    <div>
-                        <p style="color: var(--text-2); font-size: var(--text-sm);">Téléphone</p>
-                        <p style="font-weight: 600;">{{ user.profile.phone|default:"Non spécifié" }}</p>
-                    </div>
-                    <div>
-                        <p style="color: var(--text-2); font-size: var(--text-sm);">Adresse</p>
-                        <p style="font-weight: 600;">{{ user.profile.address|default:"Non spécifié" }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card" style="padding: var(--s-8);">
-                <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: var(--s-4);">Paramètres de Compte</h3>
-                <div style="display: flex; flex-direction: column; gap: var(--s-3);">
-                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-ghost">
-                        <i class="fas fa-edit"></i> Modifier le Profil
-                    </a>
-                    <a href="#" class="btn btn-ghost">
-                        <i class="fas fa-lock"></i> Changer le Mot de Passe
-                    </a>
-                    <form method="post" action="{% url 'accounts:logout' %}" style="display: inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-ghost" style="width: 100%; text-align: left;">
-                            <i class="fas fa-sign-out-alt"></i> Déconnexion
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sidebar -->
-        <aside>
-            <div class="card" style="padding: var(--s-6); position: sticky; top: var(--s-4);">
-                <h3 style="font-family: var(--font-display); margin-bottom: var(--s-4);">Accès Rapide</h3>
-                <div style="display: flex; flex-direction: column; gap: var(--s-2);">
-                    <a href="{% url 'borrowing:borrow_list' %}" class="btn btn-ghost btn-sm">
-                        <i class="fas fa-hand-holding-heart"></i> Mes Emprunts
-                    </a>
-                    <a href="{% url 'reservations:list' %}" class="btn btn-ghost btn-sm">
-                        <i class="fas fa-bookmark"></i> Mes Réservations
-                    </a>
-                    <a href="{% url 'orders:orders_list' %}" class="btn btn-ghost btn-sm">
-                        <i class="fas fa-box"></i> Mes Commandes
-                    </a>
-                    <a href="{% url 'cart:cart' %}" class="btn btn-ghost btn-sm">
-                        <i class="fas fa-shopping-cart"></i> Mon Panier
-                    </a>
-                </div>
-            </div>
-        </aside>
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Profil</p>
+        <h1>{{ user.get_full_name|default:user.username }}</h1>
+        <p>{{ user.email }} - {{ user.get_role_display }}</p>
     </div>
+    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary"><i class="fas fa-pen"></i> Modifier</a>
+</header>
+
+<section class="metric-grid section">
+    <div class="metric-card"><span>Livres empruntes</span><strong>{{ profile.total_books_borrowed|default:0 }}</strong></div>
+    <div class="metric-card"><span>Livres achetes</span><strong>{{ profile.total_books_purchased|default:0 }}</strong></div>
+    <div class="metric-card"><span>Reservations</span><strong>{{ profile.number_of_reservations|default:0 }}</strong></div>
+    <div class="metric-card"><span>Total depense</span><strong>{{ profile.total_amount_spent|default:0 }} DH</strong></div>
+</section>
+
+<div class="split-layout">
+    <section class="detail-panel">
+        <h2>Informations personnelles</h2>
+        <div class="spec-grid">
+            <div class="spec-card"><span>Prenom</span><strong>{{ user.first_name|default:"Non specifie" }}</strong></div>
+            <div class="spec-card"><span>Nom</span><strong>{{ user.last_name|default:"Non specifie" }}</strong></div>
+            <div class="spec-card"><span>Telephone</span><strong>{{ user.phone|default:"Non specifie" }}</strong></div>
+            <div class="spec-card"><span>Membre actif</span><strong>{{ user.is_active_member|yesno:"Oui,Non" }}</strong></div>
+        </div>
+        <div class="spec-card">
+            <span>Adresse</span>
+            <strong>{{ user.address|default:"Non specifiee" }}</strong>
+        </div>
+    </section>
+    <aside class="summary-panel">
+        <h2>Acces rapide</h2>
+        <div class="action-stack">
+            <a href="{% url 'orders:orders_list' %}" class="btn btn-ghost">Commandes</a>
+            <a href="{% url 'borrowing:borrow_list' %}" class="btn btn-ghost">Emprunts</a>
+            <a href="{% url 'reservations:list' %}" class="btn btn-ghost">Reservations</a>
+            <a href="{% url 'cart:cart' %}" class="btn btn-ghost">Panier</a>
+        </div>
+    </aside>
 </div>
 {% endblock %}

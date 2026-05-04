@@ -1,0 +1,10 @@
+<section class="empty-state">
+    <div class="empty-state__icon">
+        <i class="fas fa-{{ icon|default:'box-open' }}"></i>
+    </div>
+    <h2>{{ title|default:"Aucun element" }}</h2>
+    <p>{{ message|default:"Les donnees apparaitront ici des qu'elles seront disponibles." }}</p>
+    {% if cta_url and cta_label %}
+        <a href="{{ cta_url }}" class="btn btn-primary">{{ cta_label }}</a>
+    {% endif %}
+</section>

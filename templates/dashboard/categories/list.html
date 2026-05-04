@@ -1,0 +1,29 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}Categories{% endblock %}
+{% block dashboard_actions %}<a class="btn btn-primary" href="{% url 'dashboard:category_add' %}"><i class="fas fa-plus"></i> Categorie</a>{% endblock %}
+
+{% block dashboard_content %}
+<section class="dashboard-panel">
+    <div class="table-wrap">
+        <table class="dashboard-table">
+            <thead><tr><th>Nom</th><th>Description</th><th>Icone</th><th></th></tr></thead>
+            <tbody>
+            {% for category in categories %}
+                <tr>
+                    <td><strong>{{ category.name }}</strong></td>
+                    <td>{{ category.description|truncatechars:90 }}</td>
+                    <td>{{ category.icon|default:"-" }}</td>
+                    <td class="row-actions">
+                        <a href="{% url 'dashboard:category_edit' category.pk %}"><i class="fas fa-pen"></i></a>
+                        <a href="{% url 'dashboard:category_delete' category.pk %}"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="empty-state">Aucune categorie.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

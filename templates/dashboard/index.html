@@ -1,0 +1,90 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Dashboard admin | BiblioNUM{% endblock %}
+{% block dashboard_title %}Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<section class="dashboard-overview">
+    <div class="dashboard-panel dashboard-panel--hero">
+        <div class="panel-head">
+            <div>
+                <h2>Book Analytics</h2>
+                <p>Commandes, revenus et activite globale de la bibliotheque.</p>
+            </div>
+            <span class="panel-chip">This Month</span>
+        </div>
+        <canvas class="dashboard-chart dashboard-chart--area" data-chart='{{ revenue_by_month|safe }}' data-variant="area"></canvas>
+    </div>
+
+    <div class="side-kpis">
+        <article class="side-kpi side-kpi--blue">
+            <span><i class="fas fa-users"></i></span>
+            <small>Utilisateurs</small>
+            <strong>{{ total_users }}</strong>
+            <em>Total inscrits</em>
+        </article>
+        <article class="side-kpi side-kpi--green">
+            <span><i class="fas fa-credit-card"></i></span>
+            <small>Stripe Revenue</small>
+            <strong>{{ stripe_revenue }} DH</strong>
+            <em>{{ stripe_payments_count }} transactions Stripe</em>
+        </article>
+        <article class="side-kpi side-kpi--orange">
+            <span><i class="fas fa-boxes-stacked"></i></span>
+            <small>Stock faible</small>
+            <strong>{{ low_stock }}</strong>
+            <em>{{ stock_total }} exemplaires</em>
+        </article>
+    </div>
+</section>
+
+<section class="metric-strip">
+    <article><small>Total Revenue</small><strong>{{ total_revenue }} DH</strong><span class="spark spark-blue"></span></article>
+    <article><small>Commandes</small><strong>{{ total_orders }}</strong><span class="spark spark-indigo"></span></article>
+    <article><small>Paiements echoues</small><strong>{{ failed_payments }}</strong><span class="spark spark-orange"></span></article>
+    <article><small>En attente</small><strong>{{ pending_payments }}</strong><span class="spark spark-green"></span></article>
+</section>
+
+<section class="dashboard-lower-grid">
+    <article class="dashboard-panel dashboard-panel--blue">
+        <div class="panel-head panel-head--light">
+            <div>
+                <h2>Sales by Category</h2>
+                <p>Livres les plus vendus</p>
+            </div>
+        </div>
+        <canvas class="dashboard-chart dashboard-chart--bars" data-chart='{{ top_books|safe }}' data-variant="bars"></canvas>
+    </article>
+
+    <article class="dashboard-panel">
+        <div class="panel-head">
+            <h2>What is New</h2>
+            <a href="{% url 'dashboard:users' %}">View all</a>
+        </div>
+        {% for item in recent_users %}
+            <a class="mini-feed" href="{% url 'dashboard:user_detail' item.pk %}">
+                <span class="avatar-mini">{{ item.username|first|upper }}</span>
+                <span>{{ item.username }}<small>{{ item.email|default:"Nouvel utilisateur" }}</small></span>
+            </a>
+        {% empty %}
+            <p class="empty-state">Aucun utilisateur recent.</p>
+        {% endfor %}
+    </article>
+
+    <article class="dashboard-panel">
+        <div class="panel-head">
+            <h2>Latest Activity</h2>
+            <a href="{% url 'dashboard:orders' %}">Orders</a>
+        </div>
+        {% for order in recent_orders %}
+            <a class="timeline-item" href="{% url 'dashboard:order_detail' order.pk %}">
+                <span></span>
+                <strong>{{ order.order_number }}</strong>
+                <small>{{ order.user }} - {{ order.total }} DH</small>
+            </a>
+        {% empty %}
+            <p class="empty-state">Aucune commande recente.</p>
+        {% endfor %}
+    </article>
+</section>
+{% endblock %}

@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'apps.orders',
     'apps.borrowing',
     'apps.reservations',
+    'apps.dashboard',
 ]
 
 # Celery Configuration
@@ -85,6 +86,13 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'your-email@gmail.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password')
 DEFAULT_FROM_EMAIL = 'noreply@library.com'
+
+# Stripe Checkout
+SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_CURRENCY = os.getenv('STRIPE_CURRENCY', 'mad').lower()
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

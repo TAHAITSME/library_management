@@ -64,14 +64,39 @@ class CustomUserChangeForm(UserChangeForm):
 
 
 class ProfileForm(forms.ModelForm):
-    """Formulaire de profil utilisateur - LECTURE SEULE"""
+    """Formulaire de modification du profil utilisateur."""
     
     class Meta:
-        model = Profile
-        fields = ()  # Empty - profile fields are read-only and managed by administrators only
-        
+        model = CustomUser
+        fields = ('first_name', 'last_name', 'email', 'phone', 'address', 'bio', 'avatar')
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'input'}),
+            'last_name': forms.TextInput(attrs={'class': 'input'}),
+            'email': forms.EmailInput(attrs={'class': 'input'}),
+            'phone': forms.TextInput(attrs={'class': 'input'}),
+            'address': forms.Textarea(attrs={'class': 'textarea', 'rows': 3}),
+            'bio': forms.Textarea(attrs={'class': 'textarea', 'rows': 3}),
+            'avatar': forms.URLInput(attrs={'class': 'input'}),
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Make all fields read-only if they are displayed
-        for field in self.fields:
-            self.fields[field].disabled = True
+        self.fields['first_name'].label = 'Prenom'
+        self.fields['last_name'].label = 'Nom'
+        self.fields['email'].label = 'Email'
+        self.fields['phone'].label = 'Telephone'
+        self.fields['address'].label = 'Adresse'
+        self.fields['bio'].label = 'Bio'
+        self.fields['avatar'].label = 'URL avatar'
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        if not email:
+            return email
+
+        queryset = CustomUser.objects.filter(email__iexact=email)
+        if self.instance.pk:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise forms.ValidationError('Cet email est deja utilise.')
+        return email

@@ -1,0 +1,31 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}{{ page_title|default:"Formulaire" }}{% endblock %}
+
+{% block dashboard_content %}
+<section class="dashboard-panel dashboard-form-panel">
+    <form method="post" enctype="multipart/form-data" class="dashboard-form">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="dashboard-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.name == 'cover_image' and object and object.get_cover_image_url %}
+                    <div class="dashboard-image-preview">
+                        <img src="{{ object.get_cover_image_url }}" alt="{{ object.title|default:'Couverture' }}">
+                    </div>
+                {% endif %}
+                {{ field }}
+                {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+        {% endfor %}
+        {% if form.non_field_errors %}
+            <div class="field-error">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i> Enregistrer</button>
+            <a class="btn btn-ghost" href="{{ request.META.HTTP_REFERER|default:'javascript:history.back()' }}">Annuler</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,34 +1,362 @@
 {% extends 'base.html' %}
 
-{% block title %}Mes Commandes | BiblioNUM{% endblock %}
+{% block title %}Mes commandes | BiblioNUM{% endblock %}
+
+{% block extra_css %}
+<style>
+  .orders-page {
+    display: grid;
+    gap: 22px;
+  }
+
+  .orders-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 24px;
+    align-items: end;
+    padding: clamp(24px, 4vw, 42px);
+    border: 1px solid var(--app-border);
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at 88% 12%, rgb(31 58 138 / 16%), transparent 32%),
+      linear-gradient(135deg, var(--app-surface), var(--app-primary-soft));
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .orders-hero__copy {
+    max-width: 760px;
+  }
+
+  .orders-hero h1 {
+    margin: 0;
+    font-size: clamp(2.25rem, 5vw, 4.8rem);
+    line-height: .95;
+  }
+
+  .orders-hero p:not(.eyebrow) {
+    max-width: 620px;
+    margin-top: 12px;
+    color: var(--app-muted);
+    font-size: 1.02rem;
+  }
+
+  .orders-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .orders-summary__card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-lg);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .orders-summary__icon {
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: var(--app-radius);
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+  }
+
+  .orders-summary__card span {
+    display: block;
+    color: var(--app-muted);
+    font-size: .84rem;
+    font-weight: 800;
+  }
+
+  .orders-summary__card strong {
+    display: block;
+    margin-top: 4px;
+    color: var(--app-text);
+    font-size: 1.45rem;
+    line-height: 1;
+  }
+
+  .orders-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .order-card {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(120px, .65fr)) auto;
+    gap: 18px;
+    align-items: center;
+    padding: 18px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-lg);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .order-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--app-border-strong);
+    box-shadow: var(--app-shadow);
+  }
+
+  .order-card__main {
+    min-width: 0;
+  }
+
+  .order-card__number {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    color: var(--app-text);
+    font-size: 1rem;
+    font-weight: 900;
+  }
+
+  .order-card__number i {
+    color: var(--app-primary);
+  }
+
+  .order-card__meta {
+    color: var(--app-muted);
+    font-size: .9rem;
+  }
+
+  .order-field {
+    display: grid;
+    gap: 5px;
+  }
+
+  .order-field span {
+    color: var(--app-faint);
+    font-size: .74rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .order-field strong {
+    color: var(--app-text);
+    font-size: .98rem;
+  }
+
+  .order-card__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .status-pill {
+    width: fit-content;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding-inline: 10px;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 900;
+  }
+
+  .status-pill::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .status-pill--pending {
+    background: var(--app-warning-soft);
+    color: var(--app-warning);
+  }
+
+  .status-pill--processing {
+    background: var(--app-info-soft);
+    color: var(--app-info);
+  }
+
+  .status-pill--shipped {
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+  }
+
+  .status-pill--delivered {
+    background: var(--app-success-soft);
+    color: var(--app-success);
+  }
+
+  .status-pill--cancelled {
+    background: var(--app-danger-soft);
+    color: var(--app-danger);
+  }
+
+  .orders-empty {
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 24px;
+    align-items: center;
+    padding: clamp(26px, 5vw, 46px);
+    border: 1px dashed var(--app-border-strong);
+    border-radius: 18px;
+    background: var(--app-surface);
+  }
+
+  .orders-empty__icon {
+    width: 72px;
+    height: 72px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+    font-size: 1.8rem;
+  }
+
+  @media (max-width: 1040px) {
+    .orders-summary {
+      grid-template-columns: 1fr;
+    }
+
+    .order-card {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .order-card__main,
+    .order-card__actions {
+      grid-column: 1 / -1;
+    }
+
+    .order-card__actions {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .orders-hero,
+    .orders-empty {
+      grid-template-columns: 1fr;
+    }
+
+    .orders-hero .btn,
+    .orders-empty .btn {
+      width: 100%;
+    }
+
+    .order-card {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .order-card__main,
+    .order-card__actions {
+      grid-column: auto;
+    }
+
+    .order-card__actions,
+    .order-card__actions .btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
-    <h1 style="font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: var(--s-8);">
-        <i class="fas fa-box"></i> Mes Commandes
-    </h1>
+<div class="orders-page">
+    <header class="orders-hero">
+        <div class="orders-hero__copy">
+            <p class="eyebrow">Commandes</p>
+            <h1>Vos achats, clairement suivis.</h1>
+            <p>Retrouvez chaque commande, son statut, son total et ses details au meme endroit.</p>
+        </div>
+        <a href="{% url 'catalog:books_list' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nouvelle commande
+        </a>
+    </header>
 
     {% if orders %}
-        <div style="display: grid; gap: var(--s-4);">
-            {% for order in orders %}
-                <div class="card" style="padding: var(--s-6); display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: var(--s-2);">Commande #{{ order.id }}</h3>
-                        <p style="color: var(--text-2); font-size: var(--text-sm);">{{ order.created_at|date:"d M Y" }}</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--s-2);">{{ order.total_price }}.00 DH</div>
-                        <span style="display: inline-block; padding: var(--s-2) var(--s-4); background: var(--primary); color: white; border-radius: var(--r-md); font-size: var(--text-sm);">{{ order.get_status_display }}</span>
-                    </div>
+        <section class="orders-summary" aria-label="Resume des commandes">
+            <article class="orders-summary__card">
+                <span class="orders-summary__icon"><i class="fas fa-receipt"></i></span>
+                <div>
+                    <span>Commandes</span>
+                    <strong>{{ orders|length }}</strong>
                 </div>
+            </article>
+            <article class="orders-summary__card">
+                <span class="orders-summary__icon"><i class="fas fa-clock"></i></span>
+                <div>
+                    <span>Derniere activite</span>
+                    <strong>{{ orders.0.created_at|date:"d/m/Y" }}</strong>
+                </div>
+            </article>
+            <article class="orders-summary__card">
+                <span class="orders-summary__icon"><i class="fas fa-shield-halved"></i></span>
+                <div>
+                    <span>Suivi</span>
+                    <strong>Actif</strong>
+                </div>
+            </article>
+        </section>
+
+        <section class="orders-list" aria-label="Liste des commandes">
+            {% for order in orders %}
+                <article class="order-card">
+                    <div class="order-card__main">
+                        <div class="order-card__number">
+                            <i class="fas fa-bag-shopping"></i>
+                            <span>{{ order.order_number }}</span>
+                        </div>
+                        <div class="order-card__meta">{{ order.user }} - {{ order.created_at|date:"d/m/Y H:i" }}</div>
+                    </div>
+
+                    <div class="order-field">
+                        <span>Articles</span>
+                        <strong>{{ order.items.count }}</strong>
+                    </div>
+
+                    <div class="order-field">
+                        <span>Total</span>
+                        <strong>{{ order.total }} DH</strong>
+                    </div>
+
+                    <div class="order-field">
+                        <span>Statut</span>
+                        <strong class="status-pill status-pill--{{ order.status }}">{{ order.get_status_display }}</strong>
+                    </div>
+
+                    <div class="order-card__actions">
+                        {% if order.payment_status != 'paid' and order.status != 'cancelled' %}
+                            <a href="{% url 'orders:order_payment' order.id %}" class="btn btn-primary btn-sm">Payer</a>
+                        {% endif %}
+                        <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost btn-sm">Details</a>
+                    </div>
+                </article>
             {% endfor %}
-        </div>
+        </section>
     {% else %}
-        <div class="card" style="padding: var(--s-12); text-align: center;">
-            <h3 style="font-family: var(--font-display); margin-bottom: var(--s-3);">Aucune commande</h3>
-            <p style="color: var(--text-2); margin-bottom: var(--s-6);">Vous n'avez pas encore passé de commande.</p>
-            <a href="{% url 'catalog:books_list' %}" class="btn btn-primary">Parcourir le catalogue</a>
-        </div>
+        <section class="orders-empty">
+            <div>
+                <p class="eyebrow">Aucune commande</p>
+                <h2>Votre historique est encore vide.</h2>
+                <p>Explorez le catalogue, ajoutez un livre au panier et retrouvez ensuite votre suivi ici.</p>
+            </div>
+            <span class="orders-empty__icon"><i class="fas fa-receipt"></i></span>
+            <a href="{% url 'catalog:books_list' %}" class="btn btn-primary">Explorer le catalogue</a>
+        </section>
     {% endif %}
 </div>
 {% endblock %}

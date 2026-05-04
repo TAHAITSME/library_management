@@ -1,0 +1,16 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}Suppression{% endblock %}
+
+{% block dashboard_content %}
+<section class="dashboard-panel dashboard-form-panel">
+    <form method="post">
+        {% csrf_token %}
+        <p>Confirmer la suppression de <strong>{{ object }}</strong> ?</p>
+        <div class="form-actions">
+            <button class="btn btn-danger" type="submit"><i class="fas fa-trash"></i> Supprimer</button>
+            <a class="btn btn-ghost" href="{{ request.META.HTTP_REFERER|default:'javascript:history.back()' }}">Annuler</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Paiement annule | 9rayaHub{% endblock %}
+
+{% block content %}
+<section class="form-card">
+    <p class="eyebrow">Stripe</p>
+    <h1>Paiement annule</h1>
+    <p>Votre commande reste en attente. Vous pouvez relancer le paiement a tout moment.</p>
+    <div class="form-row-between">
+        <a class="btn btn-ghost" href="{% url 'orders:order_detail' order.id %}">Voir la commande</a>
+        <a class="btn btn-primary" href="{% url 'orders:order_payment' order.id %}">Reessayer</a>
+    </div>
+</section>
+{% endblock %}

@@ -3,49 +3,20 @@
 {% block title %}Confirmer le retour | BiblioNUM{% endblock %}
 
 {% block content %}
-<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
-    <div style="max-width: 600px; margin: 0 auto;">
-        <!-- Card Confirmation -->
-        <div class="card" style="padding: var(--s-8); text-align: center;">
-            <div style="font-size: 3rem; margin-bottom: var(--s-6);">📚</div>
-            
-            <h1 style="font-family: var(--font-display); font-size: var(--text-2xl); margin-bottom: var(--s-3);">Confirmer le retour</h1>
-            
-            <div style="background: var(--surface-raised); padding: var(--s-6); border-radius: var(--r-md); margin: var(--s-6) 0; text-align: left;">
-                <h3 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--s-3);">{{ borrow.book.title }}</h3>
-                <p style="color: var(--text-secondary); margin-bottom: var(--s-4);">{{ borrow.book.author.first_name }} {{ borrow.book.author.last_name }}</p>
-                
-                <div style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.8;">
-                    <div><strong>Emprunté le:</strong> {{ borrow.borrow_date|date:"d M Y à H:i" }}</div>
-                    <div><strong>À rendre le:</strong> {{ borrow.due_date|date:"d M Y" }}</div>
-                    <div><strong>Date du retour:</strong> Aujourd'hui ({{ now|date:"d M Y" }})</div>
-                </div>
-                
-                {% if borrow.status == 'overdue' %}
-                <div style="margin-top: var(--s-4); padding: var(--s-3); background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; border-radius: var(--r-sm);">
-                    <div style="color: #ef4444; font-weight: 600;">⚠️ Emprunt en retard</div>
-                    <div style="color: #ef4444; font-size: var(--text-sm); margin-top: var(--s-1);">
-                        Pénalité: <strong>{{ borrow.fine_amount|floatformat:2 }}€</strong>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-            
-            <p style="color: var(--text-secondary); margin-bottom: var(--s-6);">Confirmez-vous le retour de ce livre?</p>
-            
-            <!-- Actions -->
-            <div style="display: flex; gap: var(--s-4); justify-content: center;">
-                <a href="{% url 'borrowing:borrow_detail' borrow.id %}" style="display: inline-block; padding: var(--s-3) var(--s-6); background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--r-md); text-decoration: none; color: var(--text); font-weight: 600;">
-                    Annuler
-                </a>
-                <form method="post" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" style="display: inline-block; padding: var(--s-3) var(--s-6); background: var(--success); color: white; border: none; border-radius: var(--r-md); font-weight: 600; cursor: pointer;">
-                        ✓ Confirmer le retour
-                    </button>
-                </form>
-            </div>
-        </div>
+<section class="form-card">
+    <p class="eyebrow">Retour</p>
+    <h1>Confirmer le retour</h1>
+    <p>{{ borrow.book.title }} par {{ borrow.book.author }}</p>
+    <div class="spec-grid">
+        <div class="spec-card"><span>Emprunte le</span><strong>{{ borrow.borrow_date|date:"d/m/Y" }}</strong></div>
+        <div class="spec-card"><span>Date limite</span><strong>{{ borrow.due_date|date:"d/m/Y" }}</strong></div>
+        <div class="spec-card"><span>Statut</span><strong>{{ borrow.get_status_display }}</strong></div>
+        <div class="spec-card"><span>Penalite</span><strong>{{ borrow.fine_amount|floatformat:2 }} DH</strong></div>
     </div>
-</div>
+    <form method="post" class="form-row-between">
+        {% csrf_token %}
+        <a href="{% url 'borrowing:borrow_detail' borrow.id %}" class="btn btn-ghost">Annuler</a>
+        <button type="submit" class="btn btn-primary">Confirmer le retour</button>
+    </form>
+</section>
 {% endblock %}

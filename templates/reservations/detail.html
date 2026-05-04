@@ -1,161 +1,60 @@
 {% extends 'base.html' %}
 
-{% block title %}Détail Réservation | BiblioNUM{% endblock %}
+{% block title %}Reservation | BiblioNUM{% endblock %}
 
 {% block content %}
-<div class="container" style="margin-top: var(--s-12); margin-bottom: var(--s-20);">
-    <!-- Navigation -->
-    <div style="margin-bottom: var(--s-8);">
-        <a href="{% url 'reservations:list' %}" style="color: var(--primary); text-decoration: none; font-size: var(--text-sm);">
-            ← Retour à mes réservations
-        </a>
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Reservation</p>
+        <h1>{{ reservation.book.title }}</h1>
+        <p>Position #{{ reservation.queue_position }} - expiration le {{ reservation.expiration_date|date:"d/m/Y" }}</p>
     </div>
+    <a href="{% url 'reservations:list' %}" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Retour</a>
+</header>
 
-    <div style="display: grid; grid-template-columns: 300px 1fr; gap: var(--s-8);">
-        <!-- Sidebar -->
-        <div>
-            <div style="aspect-ratio: 3/4; background: var(--surface-raised); border-radius: var(--r-lg); overflow: hidden; margin-bottom: var(--s-6); display: flex; align-items: center; justify-content: center;">
-                {% if reservation.book.cover_image %}
-                <img src="{{ reservation.book.cover_image }}" alt="{{ reservation.book.title }}" style="width: 100%; height: 100%; object-fit: cover;">
-                {% else %}
-                <span style="font-size: 4rem;">📖</span>
-                {% endif %}
-            </div>
-
-            <!-- Status -->
-            {% if is_ready %}
-            <div style="padding: var(--s-4); background: rgba(34, 197, 94, 0.1); border: 2px solid #22c55e; border-radius: var(--r-md); text-align: center; margin-bottom: var(--s-4);">
-                <div style="color: #22c55e; font-weight: 600; margin-bottom: var(--s-2);">✓ PRÊT À EMPRUNTER</div>
-                <div style="color: #22c55e; font-size: var(--text-sm);">Le livre vous attend!</div>
-            </div>
-            {% elif is_expired %}
-            <div style="padding: var(--s-4); background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: var(--r-md); text-align: center; margin-bottom: var(--s-4);">
-                <div style="color: #ef4444; font-weight: 600; margin-bottom: var(--s-2);">✕ RÉSERVATION EXPIRÉE</div>
-                <div style="color: #ef4444; font-size: var(--text-sm);">Veuillez en créer une nouvelle</div>
-            </div>
-            {% else %}
-            <div style="padding: var(--s-4); background: rgba(59, 130, 246, 0.1); border: 2px solid var(--primary); border-radius: var(--r-md); text-align: center; margin-bottom: var(--s-4);">
-                <div style="color: var(--primary); font-weight: 600; margin-bottom: var(--s-2);">⏳ EN ATTENTE</div>
-                <div style="color: var(--primary); font-size: var(--text-sm);">Position: #{{ reservation.queue_position }}</div>
-            </div>
-            {% endif %}
+<div class="detail-hero">
+    <aside class="detail-cover">
+        <div class="detail-cover__media">
+            {% if reservation.book.get_cover_image_url %}<img src="{{ reservation.book.get_cover_image_url }}" alt="{{ reservation.book.title }}">{% else %}<i class="fas fa-book fa-3x"></i>{% endif %}
         </div>
-
-        <!-- Main Content -->
-        <div>
-            <!-- Titre -->
-            <h1 style="font-family: var(--font-display); font-size: var(--text-3xl); margin: 0 0 var(--s-3) 0;">{{ reservation.book.title }}</h1>
-            <p style="color: var(--text-secondary); font-size: var(--text-lg); margin: 0 0 var(--s-8) 0;">{{ reservation.book.author.first_name }} {{ reservation.book.author.last_name }}</p>
-
-            <!-- Infos Réservation -->
-            <div class="card" style="padding: var(--s-6); margin-bottom: var(--s-8);">
-                <h2 style="font-family: var(--font-display); font-size: var(--text-lg); margin: 0 0 var(--s-6) 0;">📋 Informations</h2>
-                
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s-6);">
-                    <div>
-                        <div style="font-size: var(--text-xs); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: var(--s-2);">Réservé le</div>
-                        <div style="font-size: var(--text-lg); font-weight: 600;">{{ reservation.reservation_date|date:"d M Y" }}</div>
-                    </div>
-                    
-                    <div>
-                        <div style="font-size: var(--text-xs); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: var(--s-2);">Expire le</div>
-                        <div style="font-size: var(--text-lg); font-weight: 600;">{{ reservation.expiration_date|date:"d M Y" }}</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-secondary);">
-                            {% if days_left > 0 %}
-                            {{ days_left }} jour(s) restants
-                            {% elif days_left == 0 %}
-                            Expire aujourd'hui
-                            {% else %}
-                            Expiré
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div style="font-size: var(--text-xs); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: var(--s-2);">Position en file</div>
-                        <div style="font-size: var(--text-lg); font-weight: 600;">#{{ reservation.queue_position }}</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-secondary);">
-                            {% if reservation.queue_position == 1 %}
-                            Vous êtes en tête de file!
-                            {% else %}
-                            {{ reservation.queue_position|add:"-1" }} personne(s) avant vous
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div style="font-size: var(--text-xs); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: var(--s-2);">Exemplaires disponibles</div>
-                        <div style="font-size: var(--text-lg); font-weight: 600;">{{ reservation.book.available_copies }}/{{ reservation.book.total_copies }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Infos Livre -->
-            <div class="card" style="padding: var(--s-6); margin-bottom: var(--s-8);">
-                <h2 style="font-family: var(--font-display); font-size: var(--text-lg); margin: 0 0 var(--s-6) 0;">📖 À propos</h2>
-                
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s-4); font-size: var(--text-sm); margin-bottom: var(--s-6);">
-                    <div>
-                        <span style="color: var(--text-secondary);">ISBN:</span>
-                        <div style="font-weight: 600;">{{ reservation.book.isbn }}</div>
-                    </div>
-                    <div>
-                        <span style="color: var(--text-secondary);">Catégorie:</span>
-                        <div style="font-weight: 600;">{{ reservation.book.category.name }}</div>
-                    </div>
-                    <div>
-                        <span style="color: var(--text-secondary);">Pages:</span>
-                        <div style="font-weight: 600;">{{ reservation.book.pages }}</div>
-                    </div>
-                    <div>
-                        <span style="color: var(--text-secondary);">Langue:</span>
-                        <div style="font-weight: 600;">{{ reservation.book.language }}</div>
-                    </div>
-                </div>
-                
-                {% if reservation.book.description %}
-                <p style="color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6; margin: 0;">{{ reservation.book.description }}</p>
-                {% endif %}
-            </div>
-
-            <!-- Notifications -->
-            {% if notifications %}
-            <div class="card" style="padding: var(--s-6); margin-bottom: var(--s-8); background: var(--surface-raised);">
-                <h2 style="font-family: var(--font-display); font-size: var(--text-lg); margin: 0 0 var(--s-4) 0;">🔔 Notifications</h2>
-                
-                <div style="display: flex; flex-direction: column; gap: var(--s-2);">
+        <div class="detail-cover__actions">
+            <span class="badge badge-{{ reservation.status }}">{{ reservation.get_status_display }}</span>
+            {% if is_ready %}
+                <form method="post" action="{% url 'borrowing:borrow_request' reservation.book.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-primary" type="submit">Demander l'emprunt</button>
+                </form>
+            {% endif %}
+            {% if reservation.status == 'active' %}
+                <a href="{% url 'reservations:cancel' reservation.pk %}" class="btn btn-danger">Annuler</a>
+            {% endif %}
+            <a href="{% url 'catalog:book_detail' reservation.book.slug %}" class="btn btn-ghost">Voir le livre</a>
+        </div>
+    </aside>
+    <main class="detail-panel">
+        <div class="spec-grid">
+            <div class="spec-card"><span>Reserve le</span><strong>{{ reservation.reservation_date|date:"d/m/Y" }}</strong></div>
+            <div class="spec-card"><span>Expiration</span><strong>{{ reservation.expiration_date|date:"d/m/Y" }}</strong></div>
+            <div class="spec-card"><span>Jours restants</span><strong>{{ days_left }}</strong></div>
+            <div class="spec-card"><span>Stock</span><strong>{{ reservation.book.available_copies }}/{{ reservation.book.total_copies }}</strong></div>
+        </div>
+        <section class="section">
+            <h2>A propos du livre</h2>
+            <p>{{ reservation.book.description }}</p>
+        </section>
+        {% if notifications %}
+            <section class="section">
+                <h2>Notifications</h2>
+                <div class="review-list">
                     {% for notif in notifications %}
-                    <div style="padding: var(--s-3); background: white; border-radius: var(--r-md); border-left: 4px solid var(--primary);">
-                        <div style="font-size: var(--text-sm); font-weight: 600;">{{ notif.get_notification_type_display }}</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--s-1);">{{ notif.message }}</div>
-                        {% if notif.is_sent %}
-                        <div style="font-size: var(--text-xs); color: #22c55e; margin-top: var(--s-1);">✓ Envoyée le {{ notif.sent_at|date:"d M Y" }}</div>
-                        {% endif %}
-                    </div>
+                        <article class="review-card">
+                            <strong>{{ notif.get_notification_type_display }}</strong>
+                            <p>{{ notif.message }}</p>
+                        </article>
                     {% endfor %}
                 </div>
-            </div>
-            {% endif %}
-
-            <!-- Actions -->
-            <div style="display: flex; gap: var(--s-4); flex-wrap: wrap;">
-                {% if is_ready %}
-                <a href="{% url 'borrowing:borrow_request' reservation.book.id %}" style="display: inline-block; padding: var(--s-3) var(--s-6); background: var(--success); color: white; text-decoration: none; border-radius: var(--r-md); font-weight: 600;">
-                    📚 Emprunter maintenant
-                </a>
-                {% endif %}
-                
-                {% if reservation.status != 'completed' %}
-                <a href="{% url 'reservations:cancel' reservation.pk %}" style="display: inline-block; padding: var(--s-3) var(--s-6); background: rgba(239, 68, 68, 0.1); color: #ef4444; text-decoration: none; border-radius: var(--r-md); font-weight: 600;">
-                    ✕ Annuler la réservation
-                </a>
-                {% endif %}
-                
-                <a href="{% url 'catalog:book_detail' reservation.book.slug %}" style="display: inline-block; padding: var(--s-3) var(--s-6); background: var(--surface-raised); border: 1px solid var(--border); color: var(--text); text-decoration: none; border-radius: var(--r-md); font-weight: 600;">
-                    📖 Voir le livre
-                </a>
-            </div>
-        </div>
-    </div>
+            </section>
+        {% endif %}
+    </main>
 </div>
 {% endblock %}

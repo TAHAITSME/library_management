@@ -42,6 +42,7 @@ class Order(models.Model):
     # Statuts
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    stripe_checkout_session_id = models.CharField(max_length=255, blank=True, db_index=True)
     
     # Notes
     notes = models.TextField(blank=True)
@@ -91,6 +92,7 @@ class Payment(models.Model):
     """Paiement d'une commande"""
     
     PAYMENT_METHOD_CHOICES = [
+        ('stripe', 'Stripe'),
         ('card', 'Carte bancaire'),
         ('paypal', 'PayPal'),
         ('bank_transfer', 'Virement bancaire'),
@@ -106,9 +108,13 @@ class Payment(models.Model):
     
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default='mad')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     transaction_id = models.CharField(max_length=100, blank=True)
+    stripe_checkout_session_id = models.CharField(max_length=255, blank=True, db_index=True)
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True, db_index=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)

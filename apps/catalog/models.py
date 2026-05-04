@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from urllib.parse import urlparse
 
 
 class Category(models.Model):
@@ -55,7 +56,12 @@ class Book(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='books')
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
-    cover_image = models.URLField(null=True, blank=True, help_text='URL de la couverture du livre')
+    cover_image = models.ImageField(
+        upload_to='books/covers/',
+        null=True,
+        blank=True,
+        help_text='Image de couverture du livre'
+    )
     publication_date = models.DateField()
     publisher = models.CharField(max_length=200)
     pages = models.IntegerField(validators=[MinValueValidator(1)])
@@ -85,6 +91,21 @@ class Book(models.Model):
     def is_available(self):
         """Vérifier si le livre est disponible"""
         return self.available_copies > 0 and self.status == 'available'
+
+    def get_cover_image_url(self):
+        """Retourner une URL exploitable pour les anciennes URLs et les nouveaux uploads."""
+        if not self.cover_image:
+            return ''
+
+        image_name = str(self.cover_image)
+        parsed = urlparse(image_name)
+        if parsed.scheme in ('http', 'https'):
+            return image_name
+
+        try:
+            return self.cover_image.url
+        except ValueError:
+            return ''
 
 
 class Review(models.Model):

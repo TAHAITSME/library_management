@@ -1,0 +1,28 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}{{ managed_user.username }}{% endblock %}
+{% block dashboard_actions %}<a class="btn btn-primary" href="{% url 'dashboard:user_edit' managed_user.pk %}"><i class="fas fa-pen"></i> Modifier</a>{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-grid dashboard-grid-2">
+    <section class="dashboard-panel">
+        <h2>Profil</h2>
+        <dl class="detail-list">
+            <dt>Nom</dt><dd>{{ managed_user.get_full_name|default:"-" }}</dd>
+            <dt>Email</dt><dd>{{ managed_user.email|default:"-" }}</dd>
+            <dt>Role</dt><dd>{{ managed_user.get_role_display }}</dd>
+            <dt>Telephone</dt><dd>{{ managed_user.phone|default:"-" }}</dd>
+            <dt>Actif</dt><dd>{{ managed_user.is_active|yesno:"Oui,Non" }}</dd>
+            <dt>Staff</dt><dd>{{ managed_user.is_staff|yesno:"Oui,Non" }}</dd>
+        </dl>
+    </section>
+    <section class="dashboard-panel">
+        <h2>Activite</h2>
+        <div class="kpi-grid kpi-grid-small">
+            <div class="kpi-card"><span>Commandes</span><strong>{{ managed_user.orders.count }}</strong></div>
+            <div class="kpi-card"><span>Emprunts</span><strong>{{ managed_user.borrows.count }}</strong></div>
+            <div class="kpi-card"><span>Reservations</span><strong>{{ managed_user.reservations.count }}</strong></div>
+        </div>
+    </section>
+</div>
+{% endblock %}

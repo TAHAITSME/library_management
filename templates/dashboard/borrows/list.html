@@ -1,0 +1,45 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}Emprunts{% endblock %}
+
+{% block dashboard_content %}
+<section class="dashboard-panel">
+    <form class="dashboard-filters" method="get">
+        <select class="dashboard-input" name="status">
+            <option value="">Tous les statuts</option>
+            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Actif</option>
+            <option value="overdue" {% if request.GET.status == 'overdue' %}selected{% endif %}>En retard</option>
+            <option value="returned" {% if request.GET.status == 'returned' %}selected{% endif %}>Retourne</option>
+        </select>
+        <button class="btn btn-ghost" type="submit"><i class="fas fa-filter"></i> Filtrer</button>
+    </form>
+    <div class="table-wrap">
+        <table class="dashboard-table">
+            <thead><tr><th>Livre</th><th>Utilisateur</th><th>Emprunt</th><th>Retour prevu</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+            {% for borrow in borrows %}
+                <tr>
+                    <td><strong>{{ borrow.book.title }}</strong></td>
+                    <td>{{ borrow.user }}</td>
+                    <td>{{ borrow.borrow_date|date:"d/m/Y" }}</td>
+                    <td>{{ borrow.due_date|date:"d/m/Y" }}</td>
+                    <td><span class="badge badge-{{ borrow.status }}">{{ borrow.get_status_display }}</span></td>
+                    <td class="row-actions">
+                        {% if borrow.status != 'returned' %}
+                        <form method="post" action="{% url 'dashboard:borrow_return' borrow.pk %}">
+                            {% csrf_token %}
+                            <button title="Retourner" type="submit"><i class="fas fa-rotate-left"></i></button>
+                        </form>
+                        {% endif %}
+                        <a href="{% url 'dashboard:borrow_edit' borrow.pk %}"><i class="fas fa-pen"></i></a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="empty-state">Aucun emprunt.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'dashboard/pagination.html' %}
+</section>
+{% endblock %}

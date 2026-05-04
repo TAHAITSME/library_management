@@ -1,0 +1,28 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}Factures{% endblock %}
+{% block dashboard_actions %}<a class="btn btn-primary" href="{% url 'dashboard:invoice_add' %}"><i class="fas fa-plus"></i> Facture</a>{% endblock %}
+
+{% block dashboard_content %}
+<section class="dashboard-panel">
+    <div class="table-wrap">
+        <table class="dashboard-table">
+            <thead><tr><th>Facture</th><th>Commande</th><th>Client</th><th>Date</th><th></th></tr></thead>
+            <tbody>
+            {% for invoice in invoices %}
+                <tr>
+                    <td><strong>{{ invoice.invoice_number }}</strong></td>
+                    <td>{{ invoice.order.order_number }}</td>
+                    <td>{{ invoice.order.user }}</td>
+                    <td>{{ invoice.created_at|date:"d/m/Y" }}</td>
+                    <td class="row-actions"><a href="{% url 'dashboard:invoice_detail' invoice.pk %}"><i class="fas fa-eye"></i></a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="empty-state">Aucune facture.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'dashboard/pagination.html' %}
+</section>
+{% endblock %}
