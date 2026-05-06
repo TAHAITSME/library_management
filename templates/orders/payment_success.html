@@ -1,12 +1,17 @@
 {% extends 'base.html' %}
 
-{% block title %}Paiement en cours de confirmation | 9rayaHub{% endblock %}
+{% block title %}Paiement confirme | BiblioNUM{% endblock %}
 
 {% block content %}
 <section class="form-card">
     <p class="eyebrow">Stripe</p>
-    <h1>Paiement recu</h1>
-    <p>Stripe a redirige votre navigateur vers 9rayaHub. La confirmation definitive se fait via webhook securise.</p>
+    {% if order.payment_status == 'paid' %}
+        <h1>Paiement confirme</h1>
+        <p>Votre paiement a ete verifie cote serveur. Le stock est mis a jour et la facture est generee automatiquement.</p>
+    {% else %}
+        <h1>Paiement en attente</h1>
+        <p>La commande n'est pas encore confirmee. Le stock diminuera uniquement apres validation du paiement.</p>
+    {% endif %}
     <div class="spec-grid">
         <div class="spec-card"><span>Commande</span><strong>{{ order.order_number }}</strong></div>
         <div class="spec-card"><span>Paiement</span><strong>{{ order.get_payment_status_display }}</strong></div>

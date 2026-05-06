@@ -12,9 +12,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from apps.cart.models import Cart
+from apps.catalog.models import Book
 
 from .models import Order, OrderItem, Payment
 from .stripe_services import (
+    confirm_checkout_session,
     create_checkout_session,
     get_stripe,
     mark_order_paid_from_checkout_session,
@@ -33,7 +35,13 @@ def payments_admin_list_view(request):
 @login_required
 def orders_list_view(request):
     orders = Order.objects.filter(user=request.user).prefetch_related('items__book').order_by('-created_at')
-    return render(request, 'orders/orders_list.html', {'orders': orders})
+    pending_orders = orders.exclude(payment_status='paid')
+    paid_orders = orders.filter(payment_status='paid')
+    return render(request, 'orders/orders_list.html', {
+        'orders': orders,
+        'pending_orders': pending_orders,
+        'paid_orders': paid_orders,
+    })
 
 
 @login_required
@@ -67,6 +75,18 @@ def create_order_view(request):
 
         try:
             with transaction.atomic():
+                for cart_item in cart_items:
+                    book = Book.objects.select_for_update().get(pk=cart_item.book_id)
+                    if not book.is_available() or cart_item.quantity > book.available_copies:
+                        messages.error(
+                            request,
+                            f'Stock insuffisant pour "{book.title}". Disponible: {book.available_copies}.'
+                        )
+                        return render(request, 'orders/create_order.html', {
+                            'cart_items': cart_items,
+                            'total': cart.get_total(),
+                        })
+
                 subtotal = sum(item.get_total() for item in cart_items)
                 order = Order.objects.create(
                     user=request.user,
@@ -135,6 +155,16 @@ def create_stripe_checkout_session_view(request, order_id):
         return redirect('orders:order_detail', order_id=order.id)
 
     try:
+        with transaction.atomic():
+            for item in order.items.select_related('book'):
+                book = Book.objects.select_for_update().get(pk=item.book_id)
+                if not book.is_available() or item.quantity > book.available_copies:
+                    messages.error(
+                        request,
+                        f'Stock insuffisant pour "{book.title}". Disponible: {book.available_copies}.'
+                    )
+                    return redirect('orders:order_detail', order_id=order.id)
+
         session = create_checkout_session(request, order)
     except Exception as exc:
         logger.exception('Erreur creation session Stripe pour commande %s', order.id)
@@ -147,6 +177,37 @@ def create_stripe_checkout_session_view(request, order_id):
 @login_required
 def stripe_success_view(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
+    session_id = request.GET.get('session_id')
+
+    if order.payment_status != 'paid' and session_id:
+        try:
+            order = confirm_checkout_session(session_id, expected_order_id=order.id) or order
+            messages.success(request, 'Paiement confirme. Votre commande est maintenant en traitement.')
+        except Exception as exc:
+            logger.exception('Erreur confirmation Stripe success pour commande %s', order.id)
+            if settings.DEBUG:
+                try:
+                    order = mark_order_paid_from_checkout_session({
+                        'id': session_id,
+                        'payment_status': 'paid',
+                        'currency': settings.STRIPE_CURRENCY,
+                        'client_reference_id': str(order.id),
+                        'metadata': {
+                            'order_id': str(order.id),
+                            'user_id': str(order.user_id),
+                            'order_number': order.order_number,
+                        },
+                    })
+                    messages.success(request, 'Paiement valide en mode developpement. Stock mis a jour.')
+                except Exception:
+                    logger.exception('Erreur validation locale commande %s', order.id)
+                    messages.error(request, "Paiement non confirme: stock insuffisant ou commande invalide.")
+            else:
+                messages.warning(
+                    request,
+                    "Paiement en cours de confirmation. Si le statut ne change pas, verifiez la configuration du webhook Stripe."
+                )
+
     return render(request, 'orders/payment_success.html', {'order': order})
 
 

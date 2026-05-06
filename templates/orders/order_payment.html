@@ -168,45 +168,6 @@
     color: var(--app-muted);
   }
 
-  .card-preview {
-    margin: 0 18px 18px;
-    padding: 20px;
-    border-radius: 18px;
-    background:
-      radial-gradient(circle at 80% 20%, rgb(255 255 255 / 18%), transparent 28%),
-      linear-gradient(135deg, #111827, #1f3a8a);
-    color: white;
-    box-shadow: 0 22px 58px rgb(15 23 42 / 22%);
-  }
-
-  .card-preview__top,
-  .card-preview__bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-  }
-
-  .card-preview__chip {
-    width: 42px;
-    height: 32px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #f8d477, #b7791f);
-  }
-
-  .card-preview__number {
-    margin: 36px 0 20px;
-    font-size: clamp(1.25rem, 3vw, 2rem);
-    font-weight: 900;
-    letter-spacing: .08em;
-  }
-
-  .card-preview small,
-  .card-preview span {
-    color: rgb(255 255 255 / 74%);
-    font-weight: 800;
-  }
-
   .payment-actions {
     display: grid;
     gap: 10px;
@@ -400,24 +361,6 @@
                     </div>
                     <span class="payment-method__badge">Bientot</span>
                 </article>
-            </div>
-
-            <div class="card-preview" aria-label="Apercu carte bancaire">
-                <div class="card-preview__top">
-                    <span class="card-preview__chip"></span>
-                    <strong>BiblioNUM</strong>
-                </div>
-                <div class="card-preview__number">4242 4242 4242 4242</div>
-                <div class="card-preview__bottom">
-                    <div>
-                        <small>Titulaire</small>
-                        <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
-                    </div>
-                    <div>
-                        <small>Test</small>
-                        <strong>Stripe</strong>
-                    </div>
-                </div>
             </div>
 
             <form class="payment-actions" method="post" action="{% url 'orders:stripe_checkout' order.id %}">

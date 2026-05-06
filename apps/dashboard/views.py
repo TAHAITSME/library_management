@@ -7,6 +7,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Sum
+from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils.dateparse import parse_date
@@ -169,6 +170,20 @@ class BookDeleteView(StaffRequiredMixin, DashboardContextMixin, DeleteView):
     template_name = 'dashboard/confirm_delete.html'
     success_url = reverse_lazy('dashboard:books')
     section = 'books'
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        try:
+            return super().post(request, *args, **kwargs)
+        except ProtectedError:
+            self.object.available_copies = 0
+            self.object.status = 'discontinued'
+            self.object.save(update_fields=['available_copies', 'status', 'updated_at'])
+            messages.warning(
+                request,
+                "Ce livre est lie a des commandes ou emprunts. Il a ete retire du catalogue au lieu d'etre supprime."
+            )
+            return redirect(self.success_url)
 
 
 class CategoryListView(StaffRequiredMixin, DashboardContextMixin, ListView):
@@ -452,8 +467,12 @@ def mark_borrow_returned(request, pk):
             borrow.status = 'returned'
             borrow.calculate_fine()
             borrow.save()
-            borrow.book.available_copies += 1
-            borrow.book.save(update_fields=['available_copies', 'updated_at'])
+            borrow.book.available_copies = min(
+                borrow.book.total_copies,
+                borrow.book.available_copies + 1,
+            )
+            borrow.book.status = 'available' if borrow.book.available_copies > 0 else 'unavailable'
+            borrow.book.save(update_fields=['available_copies', 'status', 'updated_at'])
         messages.success(request, 'Livre marque comme retourne.')
     return redirect('dashboard:borrows')
 

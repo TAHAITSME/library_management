@@ -7,7 +7,7 @@
     <div>
         <p class="eyebrow">Checkout</p>
         <h1>Finaliser la commande</h1>
-        <p>Confirmez votre adresse et le contenu de votre panier.</p>
+        <p>Confirmez votre adresse. Le paiement se fera a l'etape suivante via Stripe.</p>
     </div>
 </header>
 
@@ -18,7 +18,7 @@
             <label>Adresse complete</label>
             <textarea class="textarea" name="shipping_address" rows="6" required placeholder="Adresse, ville, code postal"></textarea>
         </div>
-        <button class="btn btn-primary" type="submit"><i class="fas fa-credit-card"></i> Proceder au paiement</button>
+        <button class="btn btn-primary" type="submit"><i class="fas fa-arrow-right"></i> Creer la commande</button>
         <a href="{% url 'cart:cart' %}" class="btn btn-ghost">Retour au panier</a>
     </section>
     <aside class="summary-panel">

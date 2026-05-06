@@ -7,6 +7,9 @@
     <form method="post">
         {% csrf_token %}
         <p>Confirmer la suppression de <strong>{{ object }}</strong> ?</p>
+        <p class="text-muted">
+            Si cet element est deja utilise dans l'historique, il sera retire du catalogue au lieu d'etre supprime definitivement.
+        </p>
         <div class="form-actions">
             <button class="btn btn-danger" type="submit"><i class="fas fa-trash"></i> Supprimer</button>
             <a class="btn btn-ghost" href="{{ request.META.HTTP_REFERER|default:'javascript:history.back()' }}">Annuler</a>

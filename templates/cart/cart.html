@@ -7,7 +7,7 @@
     <div>
         <p class="eyebrow">Panier</p>
         <h1>Votre selection</h1>
-        <p>Verifiez les quantites avant de passer la commande.</p>
+        <p>Verifiez les quantites avant de creer la commande.</p>
     </div>
     <a href="{% url 'catalog:books_list' %}" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Continuer</a>
 </header>
@@ -51,7 +51,7 @@
             <div class="summary-row"><span>Livraison</span><strong>Gratuite</strong></div>
             <div class="summary-row summary-total"><span>Total</span><strong>{{ total }} DH</strong></div>
             <div class="action-stack" style="margin-top: 16px;">
-                <a href="{% url 'orders:create_order' %}" class="btn btn-primary"><i class="fas fa-credit-card"></i> Commander</a>
+                <a href="{% url 'orders:create_order' %}" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Continuer vers la commande</a>
                 <form method="post" action="{% url 'cart:clear_cart' %}">
                     {% csrf_token %}
                     <button class="btn btn-ghost" type="submit">Vider le panier</button>

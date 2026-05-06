@@ -7,6 +7,8 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.catalog.models import Book
+
 from .models import Invoice, Order, Payment
 
 
@@ -100,6 +102,18 @@ def create_checkout_session(request, order):
     return session
 
 
+def confirm_checkout_session(session_id, expected_order_id=None):
+    stripe = get_stripe()
+    session = stripe.checkout.Session.retrieve(session_id)
+    metadata = session.get('metadata') or {}
+    order_id = metadata.get('order_id') or session.get('client_reference_id')
+    if expected_order_id is not None and str(order_id) != str(expected_order_id):
+        raise ValueError('La session Stripe ne correspond pas a cette commande.')
+    if session.get('payment_status') == 'paid':
+        return mark_order_paid_from_checkout_session(session)
+    return None
+
+
 @transaction.atomic
 def mark_order_paid_from_checkout_session(session):
     metadata = session.get('metadata') or {}
@@ -135,10 +149,14 @@ def mark_order_paid_from_checkout_session(session):
 
     if not already_paid:
         for item in order.items.select_for_update().select_related('book'):
-            book = item.book
-            book.available_copies = max(0, book.available_copies - item.quantity)
-            if book.available_copies == 0:
-                book.status = 'unavailable'
+            book = Book.objects.select_for_update().get(pk=item.book_id)
+            if book.available_copies < item.quantity:
+                raise ValueError(
+                    f"Stock insuffisant pour {book.title}: "
+                    f"{book.available_copies} disponible(s), {item.quantity} demande(s)."
+                )
+            book.available_copies -= item.quantity
+            book.status = 'available' if book.available_copies > 0 else 'unavailable'
             book.save(update_fields=['available_copies', 'status', 'updated_at'])
 
     order.payment_status = 'paid'

@@ -292,8 +292,8 @@
             <article class="orders-summary__card">
                 <span class="orders-summary__icon"><i class="fas fa-receipt"></i></span>
                 <div>
-                    <span>Commandes</span>
-                    <strong>{{ orders|length }}</strong>
+                    <span>A payer</span>
+                    <strong>{{ pending_orders|length }}</strong>
                 </div>
             </article>
             <article class="orders-summary__card">
@@ -312,8 +312,9 @@
             </article>
         </section>
 
-        <section class="orders-list" aria-label="Liste des commandes">
-            {% for order in orders %}
+        <section class="orders-list" aria-label="Commandes a payer">
+            <h2>Commandes a payer</h2>
+            {% for order in pending_orders %}
                 <article class="order-card">
                     <div class="order-card__main">
                         <div class="order-card__number">
@@ -345,8 +346,51 @@
                         <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost btn-sm">Details</a>
                     </div>
                 </article>
+            {% empty %}
+                <div class="orders-empty">
+                    <div>
+                        <p class="eyebrow">Aucune commande en attente</p>
+                        <h2>Toutes vos commandes sont reglees.</h2>
+                    </div>
+                </div>
             {% endfor %}
         </section>
+
+        {% if paid_orders %}
+            <section class="orders-list" aria-label="Historique des achats">
+                <h2>Achats payes</h2>
+                {% for order in paid_orders %}
+                    <article class="order-card">
+                        <div class="order-card__main">
+                            <div class="order-card__number">
+                                <i class="fas fa-circle-check"></i>
+                                <span>{{ order.order_number }}</span>
+                            </div>
+                            <div class="order-card__meta">{{ order.user }} - {{ order.created_at|date:"d/m/Y H:i" }}</div>
+                        </div>
+
+                        <div class="order-field">
+                            <span>Articles</span>
+                            <strong>{{ order.items.count }}</strong>
+                        </div>
+
+                        <div class="order-field">
+                            <span>Total</span>
+                            <strong>{{ order.total }} DH</strong>
+                        </div>
+
+                        <div class="order-field">
+                            <span>Paiement</span>
+                            <strong class="status-pill status-pill--delivered">Paye</strong>
+                        </div>
+
+                        <div class="order-card__actions">
+                            <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost btn-sm">Details</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% endif %}
     {% else %}
         <section class="orders-empty">
             <div>

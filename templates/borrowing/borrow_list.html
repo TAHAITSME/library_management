@@ -2,6 +2,41 @@
 
 {% block title %}Mes emprunts | BiblioNUM{% endblock %}
 
+{% block extra_css %}
+<style>
+  .borrow-countdown {
+    width: fit-content;
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--app-border);
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+    font-weight: 900;
+    font-size: .86rem;
+  }
+
+  .borrow-countdown i {
+    font-size: .92rem;
+  }
+
+  .borrow-countdown.is-warning {
+    border-color: color-mix(in srgb, var(--app-warning) 35%, var(--app-border));
+    background: var(--app-warning-soft);
+    color: var(--app-warning);
+  }
+
+  .borrow-countdown.is-danger {
+    border-color: color-mix(in srgb, var(--app-danger) 35%, var(--app-border));
+    background: var(--app-danger-soft);
+    color: var(--app-danger);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <header class="page-header">
     <div>
@@ -40,7 +75,22 @@
                     <div class="meta-row">
                         <span>Emprunte le {{ borrow.borrow_date|date:"d/m/Y" }}</span>
                         <span>Retour prevu {{ borrow.due_date|date:"d/m/Y" }}</span>
-                        <span>{{ borrow.get_days_left }} jour(s) restant(s)</span>
+                        {% if borrow.get_days_left < 0 %}
+                            <span class="borrow-countdown is-danger">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                En retard de {{ borrow.get_days_left|stringformat:"+d"|slice:"1:" }} jour(s)
+                            </span>
+                        {% elif borrow.get_days_left <= 7 %}
+                            <span class="borrow-countdown is-warning">
+                                <i class="fas fa-clock"></i>
+                                {{ borrow.get_days_left }} jour(s) restant(s)
+                            </span>
+                        {% else %}
+                            <span class="borrow-countdown">
+                                <i class="fas fa-clock"></i>
+                                {{ borrow.get_days_left }} jour(s) restant(s)
+                            </span>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="action-stack">

@@ -75,7 +75,7 @@ def borrow_detail_view(request, borrow_id):
 
 @login_required
 @require_POST
-def borrow_request_view(request, book_id):
+def borrow_request_legacy_view(request, book_id):
     """Demander un emprunt"""
     book = get_object_or_404(Book, id=book_id)
     
@@ -125,8 +125,12 @@ def return_book_view(request, borrow_id):
                 logger.info(f"Borrow {borrow.id} marked as returned for user {request.user.id}")
                 
                 # Augmenter le nombre de copies disponibles
-                borrow.book.available_copies += 1
-                borrow.book.save()
+                borrow.book.available_copies = min(
+                    borrow.book.total_copies,
+                    borrow.book.available_copies + 1,
+                )
+                borrow.book.status = 'available' if borrow.book.available_copies > 0 else 'unavailable'
+                borrow.book.save(update_fields=['available_copies', 'status', 'updated_at'])
                 logger.info(f"Book {borrow.book.id} available copies increased to {borrow.book.available_copies}")
                 
                 messages.success(request, '✓ Livre retourné avec succès!')
@@ -168,3 +172,52 @@ def renew_borrow_view(request, borrow_id):
     
     messages.success(request, f'✓ Emprunt renouvelé! Nouvelle date: {borrow.due_date.strftime("%d %b %Y")}')
     return redirect('borrowing:borrow_detail', borrow_id=borrow_id)
+
+
+@login_required
+@require_POST
+def borrow_direct_view(request, book_id):
+    """Creer un emprunt directement si un exemplaire est disponible."""
+    try:
+        with transaction.atomic():
+            book = Book.objects.select_for_update().get(id=book_id)
+
+            existing_borrow = Borrow.objects.filter(
+                user=request.user,
+                book=book,
+                status__in=['active', 'overdue'],
+            ).exists()
+            if existing_borrow:
+                messages.warning(request, 'Vous avez deja un emprunt actif pour ce livre.')
+                return redirect('catalog:book_detail', slug=book.slug)
+
+            if not book.is_available():
+                messages.error(request, "Ce livre n'est pas disponible pour l'emprunt.")
+                return redirect('catalog:book_detail', slug=book.slug)
+
+            borrow = Borrow.objects.create(
+                user=request.user,
+                book=book,
+                due_date=timezone.now().date() + timedelta(days=30),
+                status='active',
+            )
+
+            book.available_copies -= 1
+            book.status = 'available' if book.available_copies > 0 else 'unavailable'
+            book.save(update_fields=['available_copies', 'status', 'updated_at'])
+
+            BorrowRequest.objects.filter(
+                user=request.user,
+                book=book,
+                status='pending',
+            ).update(
+                status='approved',
+                approved_by=request.user,
+                approval_date=timezone.now(),
+            )
+
+        messages.success(request, f'Emprunt cree. Retour prevu le {borrow.due_date.strftime("%d/%m/%Y")}.')
+        return redirect('borrowing:borrow_detail', borrow_id=borrow.id)
+    except Book.DoesNotExist:
+        messages.error(request, "Livre introuvable.")
+        return redirect('catalog:books_list')
