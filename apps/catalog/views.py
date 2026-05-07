@@ -265,6 +265,10 @@ def search_books_view(request):
 @login_required
 def add_review_view(request, book_id):
     book = get_object_or_404(Book, id=book_id)
+    if request.user.is_staff:
+        messages.warning(request, "Les comptes administrateur ne peuvent pas publier d'avis.")
+        return redirect('catalog:book_detail', slug=book.slug)
+
     review = Review.objects.filter(user=request.user, book=book).first()
 
     if request.method == 'POST':

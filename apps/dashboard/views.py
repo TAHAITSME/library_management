@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Count, Sum
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
@@ -19,6 +19,7 @@ from apps.borrowing.models import Borrow
 from apps.catalog.models import Author, Book, Category
 from apps.orders.models import Invoice, Order, OrderItem, Payment
 from apps.reservations.models import Reservation
+from apps.accounts.models import Complaint
 
 from .forms import (
     AuthorForm,
@@ -32,6 +33,7 @@ from .forms import (
     StockUpdateForm,
     UserAdminForm,
 )
+from apps.accounts.forms import ComplaintAdminForm
 from .models import StockMovement
 
 
@@ -54,6 +56,13 @@ class DashboardContextMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['dashboard_section'] = self.section
+        context['base_pending_orders_count'] = Order.objects.filter(status='pending').count()
+        context['base_alerts_count'] = (
+            context['base_pending_orders_count']
+            + Payment.objects.filter(status='failed').count()
+            + Book.objects.filter(available_copies__lte=2).count()
+            + Complaint.objects.filter(status__in=['new', 'in_progress']).count()
+        )
         return context
 
 
@@ -80,6 +89,45 @@ def _monthly_totals(queryset, date_field, amount_field=None):
     return [monthly_data[key] for key in sorted(monthly_data)]
 
 
+def _daily_totals(queryset, date_field, start_date, days, amount_field=None):
+    daily_data = {}
+    fields = [date_field]
+    if amount_field:
+        fields.append(amount_field)
+
+    for row in queryset.filter(**{f'{date_field}__gte': start_date}).order_by(date_field).values(*fields):
+        date_value = row.get(date_field)
+        if not date_value:
+            continue
+        if timezone.is_aware(date_value):
+            date_value = timezone.localtime(date_value)
+        key = date_value.strftime('%Y-%m-%d')
+        value = row.get(amount_field) if amount_field else 1
+        daily_data[key] = daily_data.get(key, 0) + float(value or 0)
+
+    result = []
+    for offset in range(days):
+        date_value = start_date + timedelta(days=offset)
+        key = date_value.strftime('%Y-%m-%d')
+        result.append({'label': date_value.strftime('%d/%m'), 'value': daily_data.get(key, 0)})
+    return result
+
+
+def _variation(current, previous):
+    current_value = float(current or 0)
+    previous_value = float(previous or 0)
+    if previous_value == 0:
+        return {'direction': 'neutral' if current_value == 0 else 'up', 'value': 0 if current_value == 0 else 100}
+    delta = ((current_value - previous_value) / previous_value) * 100
+    if delta > 0:
+        direction = 'up'
+    elif delta < 0:
+        direction = 'down'
+    else:
+        direction = 'neutral'
+    return {'direction': direction, 'value': abs(round(delta, 1))}
+
+
 class DashboardHomeView(StaffRequiredMixin, DashboardContextMixin, TemplateView):
     template_name = 'dashboard/index.html'
     section = 'home'
@@ -88,14 +136,138 @@ class DashboardHomeView(StaffRequiredMixin, DashboardContextMixin, TemplateView)
         context = super().get_context_data(**kwargs)
         now = timezone.now()
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        previous_month_end = month_start - timedelta(microseconds=1)
+        previous_month_start = previous_month_end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         twelve_months_ago = month_start - timedelta(days=365)
+        week_start = now - timedelta(days=6)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         paid_orders = Order.objects.filter(payment_status='paid')
         stripe_payments = Payment.objects.filter(payment_method='stripe', status='completed')
+        paid_items = OrderItem.objects.filter(order__payment_status='paid').select_related('book', 'book__category')
+        total_revenue = paid_orders.aggregate(total=Sum('total'))['total'] or 0
+        paid_orders_count = paid_orders.count()
+        books_sold = paid_items.aggregate(total=Sum('quantity'))['total'] or 0
+        month_orders = Order.objects.filter(created_at__gte=month_start)
+        previous_month_orders = Order.objects.filter(created_at__gte=previous_month_start, created_at__lt=month_start)
+        month_revenue = paid_orders.filter(created_at__gte=month_start).aggregate(total=Sum('total'))['total'] or 0
+        previous_month_revenue = paid_orders.filter(
+            created_at__gte=previous_month_start,
+            created_at__lt=month_start,
+        ).aggregate(total=Sum('total'))['total'] or 0
+        month_books_sold = paid_items.filter(order__created_at__gte=month_start).aggregate(total=Sum('quantity'))['total'] or 0
+        previous_month_books_sold = paid_items.filter(
+            order__created_at__gte=previous_month_start,
+            order__created_at__lt=month_start,
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+        today_orders = Order.objects.filter(created_at__gte=today_start)
+        today_paid_orders = paid_orders.filter(created_at__gte=today_start)
+        today_revenue = today_paid_orders.aggregate(total=Sum('total'))['total'] or 0
+        today_books_sold = paid_items.filter(order__created_at__gte=today_start).aggregate(total=Sum('quantity'))['total'] or 0
+        book_sales = {}
+        category_sales_map = {}
+        for item in paid_items:
+            line_total = item.price * item.quantity
+            book_key = item.book_id
+            if book_key not in book_sales:
+                book_sales[book_key] = {
+                    'title': item.book.title,
+                    'author': str(item.book.author),
+                    'quantity': 0,
+                    'revenue': 0,
+                }
+            book_sales[book_key]['quantity'] += item.quantity
+            book_sales[book_key]['revenue'] += line_total
+
+            category_name = item.book.category.name if item.book.category else 'Sans categorie'
+            if category_name not in category_sales_map:
+                category_sales_map[category_name] = {'name': category_name, 'quantity': 0, 'revenue': 0}
+            category_sales_map[category_name]['quantity'] += item.quantity
+            category_sales_map[category_name]['revenue'] += line_total
+
+        top_books = sorted(
+            book_sales.values(),
+            key=lambda row: (row['revenue'], row['quantity']),
+            reverse=True,
+        )[:6]
+        revenue_chart = _monthly_totals(
+            paid_orders.filter(created_at__gte=twelve_months_ago),
+            'created_at',
+            'total',
+        )
+        six_month_chart = [item for item in revenue_chart[-6:]]
+        month_chart = _daily_totals(paid_orders, 'created_at', month_start, max((now.date() - month_start.date()).days + 1, 1), 'total')
+        total_chart = revenue_chart
+        order_sparkline = _daily_totals(Order.objects.all(), 'created_at', week_start, 7)
+        revenue_sparkline = _daily_totals(paid_orders, 'created_at', week_start, 7, 'total')
+        sold_sparkline = []
+        for offset in range(7):
+            day_start = week_start + timedelta(days=offset)
+            day_end = day_start + timedelta(days=1)
+            sold_sparkline.append({
+                'label': day_start.strftime('%d/%m'),
+                'value': paid_items.filter(order__created_at__gte=day_start, order__created_at__lt=day_end).aggregate(total=Sum('quantity'))['total'] or 0,
+            })
+        stock_sparkline = [
+            {'label': (week_start + timedelta(days=offset)).strftime('%d/%m'), 'value': Book.objects.aggregate(total=Sum('total_copies'))['total'] or 0}
+            for offset in range(7)
+        ]
+        top_books_chart = [
+            {'label': item['title'], 'value': float(item['revenue'] or 0)}
+            for item in top_books
+        ]
+        category_sales = sorted(
+            category_sales_map.values(),
+            key=lambda row: row['revenue'],
+            reverse=True,
+        )[:5]
+        order_status_counts = {
+            row['status']: row['count']
+            for row in Order.objects.values('status').annotate(count=Count('id'))
+        }
+        month_lookup = {item['label']: item['value'] for item in revenue_chart}
+        revenue_bars = []
+        max_revenue = max([float(item['value'] or 0) for item in revenue_chart] or [0])
+        for offset in range(5, -1, -1):
+            month_number = month_start.month - offset
+            year = month_start.year
+            while month_number <= 0:
+                month_number += 12
+                year -= 1
+            month_date = month_start.replace(year=year, month=month_number)
+            label = month_date.strftime('%b %Y')
+            value = month_lookup.get(label, 0)
+            value_float = float(value or 0)
+            revenue_bars.append({
+                'label': month_date.strftime('%b'),
+                'value': value,
+                'percent': round((value_float / max_revenue) * 100, 2) if max_revenue else 0,
+            })
+
+        max_book_revenue = max([float(item['revenue'] or 0) for item in top_books] or [0])
+        for item in top_books:
+            item['percent'] = round((float(item['revenue'] or 0) / max_book_revenue) * 100, 2) if max_book_revenue else 0
+
+        max_category_revenue = max([float(item['revenue'] or 0) for item in category_sales] or [0])
+        for item in category_sales:
+            item['percent'] = round((float(item['revenue'] or 0) / max_category_revenue) * 100, 2) if max_category_revenue else 0
+        line_points = []
+        area_points = ['0,92']
+        for index, item in enumerate(revenue_bars):
+            x = round((index / max(len(revenue_bars) - 1, 1)) * 100, 2)
+            value_float = float(item['value'] or 0)
+            y = round(92 - ((value_float / max_revenue) * 72), 2) if max_revenue else 92
+            item['x'] = x
+            item['y'] = y
+            line_points.append(f'{x},{y}')
+            area_points.append(f'{x},{y}')
+        area_points.append('100,92')
 
         context.update({
             'total_users': get_user_model().objects.count(),
             'total_books': Book.objects.count(),
             'total_orders': Order.objects.count(),
+            'paid_orders_count': paid_orders_count,
             'total_payments': Payment.objects.count(),
             'stripe_payments_count': stripe_payments.count(),
             'stripe_revenue': stripe_payments.aggregate(total=Sum('amount'))['total'] or 0,
@@ -104,9 +276,10 @@ class DashboardHomeView(StaffRequiredMixin, DashboardContextMixin, TemplateView)
             'total_invoices': Invoice.objects.count(),
             'total_borrows': Borrow.objects.count(),
             'total_reservations': Reservation.objects.count(),
-            'total_revenue': paid_orders.aggregate(total=Sum('total'))['total'] or 0,
-            'month_revenue': paid_orders.filter(created_at__gte=month_start).aggregate(total=Sum('total'))['total'] or 0,
-            'books_sold': OrderItem.objects.filter(order__payment_status='paid').aggregate(total=Sum('quantity'))['total'] or 0,
+            'total_revenue': total_revenue,
+            'month_revenue': month_revenue,
+            'average_order_value': round(total_revenue / paid_orders_count, 2) if paid_orders_count else 0,
+            'books_sold': books_sold,
             'books_borrowed': Borrow.objects.count(),
             'stock_total': Book.objects.aggregate(total=Sum('total_copies'))['total'] or 0,
             'low_stock': Book.objects.filter(available_copies__lte=2).count(),
@@ -114,12 +287,42 @@ class DashboardHomeView(StaffRequiredMixin, DashboardContextMixin, TemplateView)
             'recent_payments': Payment.objects.select_related('order', 'order__user').order_by('-created_at')[:6],
             'recent_users': get_user_model().objects.order_by('-date_joined')[:6],
             'orders_by_month': json.dumps(_monthly_totals(Order.objects.filter(created_at__gte=twelve_months_ago), 'created_at')),
-            'revenue_by_month': json.dumps(_monthly_totals(paid_orders.filter(created_at__gte=twelve_months_ago), 'created_at', 'total')),
-            'top_books': json.dumps([
-                {'label': row['book__title'], 'value': row['sold'] or 0}
-                for row in OrderItem.objects.filter(order__payment_status='paid')
-                .values('book__title').annotate(sold=Sum('quantity')).order_by('-sold')[:8]
-            ]),
+            'revenue_by_month': json.dumps(revenue_chart),
+            'chart_payload': {
+                'six_months': six_month_chart,
+                'month': month_chart,
+                'total': total_chart,
+            },
+            'sparkline_payload': {
+                'revenue': revenue_sparkline,
+                'orders': order_sparkline,
+                'sold': sold_sparkline,
+                'stock': stock_sparkline,
+            },
+            'top_books_chart': json.dumps(top_books_chart),
+            'revenue_bars': revenue_bars,
+            'revenue_line_points': ' '.join(line_points),
+            'revenue_area_points': ' '.join(area_points),
+            'top_books': top_books,
+            'category_sales': category_sales,
+            'pending_orders_count': order_status_counts.get('pending', 0),
+            'processing_orders_count': order_status_counts.get('processing', 0),
+            'delivered_orders_count': order_status_counts.get('delivered', 0),
+            'month_orders_count': month_orders.count(),
+            'today_orders_count': today_orders.count(),
+            'today_revenue': today_revenue,
+            'today_books_sold': today_books_sold,
+            'alerts_count': (
+                order_status_counts.get('pending', 0)
+                + Payment.objects.filter(status='failed').count()
+                + Book.objects.filter(available_copies__lte=2).count()
+                + Reservation.objects.filter(status='active').count()
+            ),
+            'active_reservations_count': Reservation.objects.filter(status='active').count(),
+            'revenue_variation': _variation(month_revenue, previous_month_revenue),
+            'orders_variation': _variation(month_orders.count(), previous_month_orders.count()),
+            'sold_variation': _variation(month_books_sold, previous_month_books_sold),
+            'stock_variation': {'direction': 'neutral', 'value': 0},
         })
         return context
 
@@ -271,6 +474,7 @@ class StockUpdateView(StaffRequiredMixin, DashboardContextMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        kwargs.pop('instance', None)
         kwargs['book'] = self.object
         return kwargs
 
@@ -474,6 +678,8 @@ def mark_borrow_returned(request, pk):
             borrow.book.status = 'available' if borrow.book.available_copies > 0 else 'unavailable'
             borrow.book.save(update_fields=['available_copies', 'status', 'updated_at'])
         messages.success(request, 'Livre marque comme retourne.')
+    else:
+        messages.info(request, 'Cet emprunt est deja marque comme retourne.')
     return redirect('dashboard:borrows')
 
 
@@ -506,6 +712,10 @@ def reservation_action(request, pk, action):
     if not user.is_authenticated or not (user.is_staff or user.is_superuser):
         raise PermissionDenied
     reservation = get_object_or_404(Reservation, pk=pk)
+    if reservation.status != 'active':
+        messages.warning(request, 'Cette reservation ne peut plus etre modifiee.')
+        return redirect('dashboard:reservations')
+
     if action == 'complete':
         reservation.status = 'completed'
         reservation.pickup_date = timezone.now()
@@ -552,3 +762,54 @@ class UserUpdateView(StaffRequiredMixin, DashboardContextMixin, UpdateView):
             form.add_error('is_active', 'Vous ne pouvez pas desactiver votre propre compte.')
             return self.form_invalid(form)
         return super().form_valid(form)
+
+
+class ComplaintListView(StaffRequiredMixin, DashboardContextMixin, ListView):
+    model = Complaint
+    template_name = 'dashboard/complaints/list.html'
+    context_object_name = 'complaints'
+    paginate_by = 20
+    section = 'complaints'
+
+    def get_queryset(self):
+        queryset = Complaint.objects.select_related('user').order_by('-created_at')
+        status = self.request.GET.get('status')
+        priority = self.request.GET.get('priority')
+        if status:
+            queryset = queryset.filter(status=status)
+        if priority:
+            queryset = queryset.filter(priority=priority)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        queryset = Complaint.objects.all()
+        context.update({
+            'new_count': queryset.filter(status='new').count(),
+            'in_progress_count': queryset.filter(status='in_progress').count(),
+            'resolved_count': queryset.filter(status='resolved').count(),
+        })
+        return context
+
+
+class ComplaintUpdateView(StaffRequiredMixin, DashboardContextMixin, UpdateView):
+    model = Complaint
+    form_class = ComplaintAdminForm
+    template_name = 'dashboard/complaints/detail.html'
+    context_object_name = 'complaint'
+    section = 'complaints'
+
+    def get_queryset(self):
+        return Complaint.objects.select_related('user')
+
+    def form_valid(self, form):
+        status = form.cleaned_data.get('status')
+        if status in ['resolved', 'closed'] and not self.object.resolved_at:
+            form.instance.resolved_at = timezone.now()
+        elif status in ['new', 'in_progress']:
+            form.instance.resolved_at = None
+        messages.success(self.request, 'Reclamation mise a jour.')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('dashboard:complaint_detail', kwargs={'pk': self.object.pk})

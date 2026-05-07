@@ -1,90 +1,401 @@
 {% extends 'dashboard/base.html' %}
 
 {% block title %}Dashboard admin | BiblioNUM{% endblock %}
-{% block dashboard_title %}Dashboard{% endblock %}
+{% block dashboard_title %}Tableau de bord{% endblock %}
 
 {% block dashboard_content %}
-<section class="dashboard-overview">
-    <div class="dashboard-panel dashboard-panel--hero">
-        <div class="panel-head">
-            <div>
-                <h2>Book Analytics</h2>
-                <p>Commandes, revenus et activite globale de la bibliotheque.</p>
+<style>
+  .admin-home {
+    display: grid;
+    gap: 16px;
+  }
+
+  .admin-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) repeat(3, minmax(170px, 220px));
+    gap: 12px;
+  }
+
+  .admin-card {
+    border: 1px solid #dfe6ef;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(38 52 71 / 5%);
+  }
+
+  .admin-card--primary {
+    padding: 20px;
+    background: #172231;
+    color: #fff;
+  }
+
+  .admin-card--primary span,
+  .admin-metric span,
+  .admin-panel__head p,
+  .admin-table small {
+    color: #8290a3;
+  }
+
+  .admin-card--primary h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+  }
+
+  .admin-card--primary strong {
+    display: block;
+    margin-top: 10px;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    line-height: 1;
+  }
+
+  .admin-card--primary span {
+    display: block;
+    margin-top: 8px;
+    font-size: .82rem;
+  }
+
+  .admin-metric {
+    display: grid;
+    align-content: center;
+    gap: 7px;
+    min-height: 118px;
+    padding: 16px;
+  }
+
+  .admin-metric strong {
+    color: #253244;
+    font-size: 1.45rem;
+    line-height: 1;
+  }
+
+  .admin-metric span {
+    font-size: .78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .admin-metric small {
+    color: #8a96a8;
+  }
+
+  .admin-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
+    gap: 12px;
+  }
+
+  .admin-panel {
+    padding: 18px;
+  }
+
+  .admin-panel__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .admin-panel__head h3 {
+    margin: 0;
+    color: #253244;
+    font-size: 1rem;
+  }
+
+  .admin-panel__head p {
+    margin: 4px 0 0;
+    font-size: .8rem;
+  }
+
+  .admin-chip {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f1f5fb;
+    color: #54657a;
+    font-size: .78rem;
+    font-weight: 800;
+  }
+
+  .admin-revenue-chart {
+    height: 290px;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+    align-items: end;
+    padding: 16px 8px 4px;
+    border-top: 1px solid #edf2f7;
+  }
+
+  .admin-bar {
+    min-width: 0;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 8px;
+    align-items: end;
+  }
+
+  .admin-bar strong,
+  .admin-bar span {
+    overflow: hidden;
+    color: #6d7b8f;
+    font-size: .72rem;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-bar__track {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: end;
+    border-radius: 8px;
+    background: #f1f5fb;
+  }
+
+  .admin-bar__fill {
+    width: 100%;
+    min-height: 6px;
+    border-radius: 8px;
+    background: #2f8ee0;
+  }
+
+  .admin-book-list,
+  .admin-ops,
+  .admin-table {
+    display: grid;
+  }
+
+  .admin-book {
+    display: grid;
+    gap: 8px;
+    padding: 12px 0;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  .admin-book:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-book__line,
+  .admin-op,
+  .admin-table a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .admin-book__line strong,
+  .admin-op strong,
+  .admin-table strong {
+    color: #253244;
+  }
+
+  .admin-book__line span {
+    min-width: 0;
+    overflow: hidden;
+    color: #253244;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-book small {
+    color: #8a96a8;
+  }
+
+  .admin-progress {
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #edf2f7;
+  }
+
+  .admin-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #22c7a9;
+  }
+
+  .admin-ops {
+    gap: 8px;
+  }
+
+  .admin-op {
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #54657a;
+  }
+
+  .admin-op:hover,
+  .admin-table a:hover {
+    background: #f1f5fb;
+  }
+
+  .admin-table a {
+    min-height: 48px;
+    padding: 0 4px;
+    border-bottom: 1px solid #edf2f7;
+    color: #253244;
+  }
+
+  .admin-table a:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-table span {
+    min-width: 0;
+  }
+
+  .admin-table strong,
+  .admin-table small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-table em {
+    flex: 0 0 auto;
+    color: #253244;
+    font-style: normal;
+    font-weight: 800;
+  }
+
+  @media (max-width: 1180px) {
+    .admin-summary,
+    .admin-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .admin-card--primary {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .admin-summary,
+    .admin-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="admin-home">
+    <section class="admin-summary">
+        <article class="admin-card admin-card--primary">
+            <h2>Montant gagne</h2>
+            <strong>{{ total_revenue }} DH</strong>
+            <span>{{ paid_orders_count }} commande(s) payee(s), {{ month_revenue }} DH ce mois</span>
+        </article>
+        <article class="admin-card admin-metric">
+            <span>Commandes</span>
+            <strong>{{ total_orders }}</strong>
+            <small>{{ pending_orders_count }} en attente</small>
+        </article>
+        <article class="admin-card admin-metric">
+            <span>Livres achetes</span>
+            <strong>{{ books_sold }}</strong>
+            <small>Panier moyen {{ average_order_value }} DH</small>
+        </article>
+        <article class="admin-card admin-metric">
+            <span>Stock</span>
+            <strong>{{ stock_total }}</strong>
+            <small>{{ low_stock }} en stock faible</small>
+        </article>
+    </section>
+
+    <section class="admin-grid">
+        <article class="admin-card admin-panel">
+            <div class="admin-panel__head">
+                <div>
+                    <h3>Revenus mensuels</h3>
+                    <p>Commandes reellement payees sur les 6 derniers mois.</p>
+                </div>
+                <span class="admin-chip">{{ total_revenue }} DH total</span>
             </div>
-            <span class="panel-chip">This Month</span>
-        </div>
-        <canvas class="dashboard-chart dashboard-chart--area" data-chart='{{ revenue_by_month|safe }}' data-variant="area"></canvas>
-    </div>
-
-    <div class="side-kpis">
-        <article class="side-kpi side-kpi--blue">
-            <span><i class="fas fa-users"></i></span>
-            <small>Utilisateurs</small>
-            <strong>{{ total_users }}</strong>
-            <em>Total inscrits</em>
-        </article>
-        <article class="side-kpi side-kpi--green">
-            <span><i class="fas fa-credit-card"></i></span>
-            <small>Stripe Revenue</small>
-            <strong>{{ stripe_revenue }} DH</strong>
-            <em>{{ stripe_payments_count }} transactions Stripe</em>
-        </article>
-        <article class="side-kpi side-kpi--orange">
-            <span><i class="fas fa-boxes-stacked"></i></span>
-            <small>Stock faible</small>
-            <strong>{{ low_stock }}</strong>
-            <em>{{ stock_total }} exemplaires</em>
-        </article>
-    </div>
-</section>
-
-<section class="metric-strip">
-    <article><small>Total Revenue</small><strong>{{ total_revenue }} DH</strong><span class="spark spark-blue"></span></article>
-    <article><small>Commandes</small><strong>{{ total_orders }}</strong><span class="spark spark-indigo"></span></article>
-    <article><small>Paiements echoues</small><strong>{{ failed_payments }}</strong><span class="spark spark-orange"></span></article>
-    <article><small>En attente</small><strong>{{ pending_payments }}</strong><span class="spark spark-green"></span></article>
-</section>
-
-<section class="dashboard-lower-grid">
-    <article class="dashboard-panel dashboard-panel--blue">
-        <div class="panel-head panel-head--light">
-            <div>
-                <h2>Sales by Category</h2>
-                <p>Livres les plus vendus</p>
+            <div class="admin-revenue-chart">
+                {% for item in revenue_bars %}
+                    <div class="admin-bar">
+                        <strong>{{ item.value|floatformat:0 }} DH</strong>
+                        <div class="admin-bar__track">
+                            <div class="admin-bar__fill" style="height: {{ item.percent|default:0 }}%;"></div>
+                        </div>
+                        <span>{{ item.label }}</span>
+                    </div>
+                {% endfor %}
             </div>
-        </div>
-        <canvas class="dashboard-chart dashboard-chart--bars" data-chart='{{ top_books|safe }}' data-variant="bars"></canvas>
-    </article>
+        </article>
 
-    <article class="dashboard-panel">
-        <div class="panel-head">
-            <h2>What is New</h2>
-            <a href="{% url 'dashboard:users' %}">View all</a>
-        </div>
-        {% for item in recent_users %}
-            <a class="mini-feed" href="{% url 'dashboard:user_detail' item.pk %}">
-                <span class="avatar-mini">{{ item.username|first|upper }}</span>
-                <span>{{ item.username }}<small>{{ item.email|default:"Nouvel utilisateur" }}</small></span>
-            </a>
-        {% empty %}
-            <p class="empty-state">Aucun utilisateur recent.</p>
-        {% endfor %}
-    </article>
+        <article class="admin-card admin-panel">
+            <div class="admin-panel__head">
+                <div>
+                    <h3>Livres les plus achetes</h3>
+                    <p>Classement par revenu encaisse.</p>
+                </div>
+            </div>
+            <div class="admin-book-list">
+                {% for book in top_books %}
+                    <div class="admin-book">
+                        <div class="admin-book__line">
+                            <span>{{ forloop.counter }}. {{ book.title }}</span>
+                            <strong>{{ book.revenue }} DH</strong>
+                        </div>
+                        <small>{{ book.quantity }} exemplaire(s) vendu(s)</small>
+                        <div class="admin-progress"><span style="width: {{ book.percent }}%;"></span></div>
+                    </div>
+                {% empty %}
+                    <p class="empty-state">Aucune vente payee pour le moment.</p>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
 
-    <article class="dashboard-panel">
-        <div class="panel-head">
-            <h2>Latest Activity</h2>
-            <a href="{% url 'dashboard:orders' %}">Orders</a>
-        </div>
-        {% for order in recent_orders %}
-            <a class="timeline-item" href="{% url 'dashboard:order_detail' order.pk %}">
-                <span></span>
-                <strong>{{ order.order_number }}</strong>
-                <small>{{ order.user }} - {{ order.total }} DH</small>
-            </a>
-        {% empty %}
-            <p class="empty-state">Aucune commande recente.</p>
-        {% endfor %}
-    </article>
-</section>
+    <section class="admin-grid">
+        <article class="admin-card admin-panel">
+            <div class="admin-panel__head">
+                <div>
+                    <h3>Suivi operationnel</h3>
+                    <p>Elements qui demandent une verification rapide.</p>
+                </div>
+            </div>
+            <div class="admin-ops">
+                <a class="admin-op" href="{% url 'dashboard:orders' %}?status=pending"><span>Commandes en attente</span><strong>{{ pending_orders_count }}</strong></a>
+                <a class="admin-op" href="{% url 'dashboard:payments' %}?status=failed"><span>Paiements echoues</span><strong>{{ failed_payments }}</strong></a>
+                <a class="admin-op" href="{% url 'dashboard:stock' %}?low=1"><span>Stock faible</span><strong>{{ low_stock }}</strong></a>
+                <a class="admin-op" href="{% url 'dashboard:reservations' %}"><span>Reservations</span><strong>{{ total_reservations }}</strong></a>
+            </div>
+        </article>
+
+        <article class="admin-card admin-panel">
+            <div class="admin-panel__head">
+                <div>
+                    <h3>Dernieres commandes</h3>
+                    <p>Activite recente du catalogue.</p>
+                </div>
+                <a class="admin-chip" href="{% url 'dashboard:orders' %}">Voir tout</a>
+            </div>
+            <div class="admin-table">
+                {% for order in recent_orders|slice:":5" %}
+                    <a href="{% url 'dashboard:order_detail' order.pk %}">
+                        <span>
+                            <strong>{{ order.order_number }}</strong>
+                            <small>{{ order.user }} - {{ order.get_payment_status_display }}</small>
+                        </span>
+                        <em>{{ order.total }} DH</em>
+                    </a>
+                {% empty %}
+                    <p class="empty-state">Aucune commande recente.</p>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+</div>
 {% endblock %}

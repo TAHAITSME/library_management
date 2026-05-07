@@ -7,11 +7,11 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Sum
 from django.urls import reverse_lazy
 
-from .models import Profile
-from .forms import CustomUserCreationForm, ProfileForm, CustomAuthenticationForm
+from .models import Complaint, Profile
+from .forms import ComplaintForm, CustomUserCreationForm, ProfileForm, CustomAuthenticationForm
 
 from apps.borrowing.models import Borrow
-from apps.orders.models import Order, Payment
+from apps.orders.models import Order, OrderItem, Payment
 from apps.reservations.models import Reservation
 from apps.catalog.models import Review, Book, Author, Category
 
@@ -63,24 +63,32 @@ def account_view(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
     user = request.user
 
-    active_borrows = Borrow.objects.filter(user=user, status='active').count()
-    total_borrows = Borrow.objects.filter(user=user).count()
-    overdue_borrows = Borrow.objects.filter(user=user, is_overdue=True, status='active').count()
+    user_borrows = Borrow.objects.filter(user=user).select_related('book', 'book__author', 'book__category')
+    user_orders = Order.objects.filter(user=user)
+    user_order_items = OrderItem.objects.filter(order__user=user).select_related('order', 'book', 'book__author', 'book__category')
+    user_reservations = Reservation.objects.filter(user=user).select_related('book', 'book__author', 'book__category')
 
-    total_orders = Order.objects.filter(user=user).count()
-    pending_orders = Order.objects.filter(user=user, status='pending').count()
-    delivered_orders = Order.objects.filter(user=user, status='delivered').count()
+    active_borrows = user_borrows.filter(status='active').count()
+    total_borrows = user_borrows.count()
+    overdue_borrows = user_borrows.filter(is_overdue=True, status='active').count()
 
-    active_reservations = Reservation.objects.filter(user=user, status='active').count()
+    total_orders = user_orders.count()
+    pending_orders = user_orders.filter(status='pending').count()
+    delivered_orders = user_orders.filter(status='delivered').count()
+    ordered_books = user_order_items.aggregate(total=Sum('quantity'))['total'] or 0
+    purchased_books = user_order_items.filter(order__payment_status='paid').aggregate(total=Sum('quantity'))['total'] or 0
+
+    active_reservations = user_reservations.filter(status='active').count()
     user_reviews = Review.objects.filter(user=user).count()
 
     total_spent = (
-        Order.objects.filter(user=user, payment_status='paid')
+        user_orders.filter(payment_status='paid')
         .aggregate(Sum('total'))['total__sum'] or 0
     )
 
-    recent_borrows = Borrow.objects.filter(user=user).order_by('-borrow_date')[:5]
-    recent_orders = Order.objects.filter(user=user).order_by('-created_at')[:5]
+    recent_borrows = user_borrows.order_by('-borrow_date')[:5]
+    recent_order_items = user_order_items.order_by('-order__created_at')[:5]
+    recent_reservations = user_reservations.order_by('-reservation_date')[:5]
 
     context = {
         'profile': profile,
@@ -91,11 +99,14 @@ def account_view(request):
         'total_orders': total_orders,
         'pending_orders': pending_orders,
         'delivered_orders': delivered_orders,
+        'ordered_books': ordered_books,
+        'purchased_books': purchased_books,
         'active_reservations': active_reservations,
         'user_reviews': user_reviews,
         'total_spent': total_spent,
         'recent_borrows': recent_borrows,
-        'recent_orders': recent_orders,
+        'recent_order_items': recent_order_items,
+        'recent_reservations': recent_reservations,
     }
     return render(request, 'accounts/account.html', context)
 
@@ -122,7 +133,7 @@ def profile_edit_view(request):
         return redirect('dashboard:index')
 
     if request.method == 'POST':
-        form = ProfileForm(request.POST, instance=request.user)
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Profil mis à jour avec succès.')
@@ -135,6 +146,30 @@ def profile_edit_view(request):
         'profile': Profile.objects.get_or_create(user=request.user)[0],
     }
     return render(request, 'accounts/profile_edit.html', context)
+
+
+@login_required
+def complaint_create_view(request):
+    """Permet a un utilisateur d'envoyer une reclamation a l'administration."""
+    if request.user.is_staff or request.user.is_superuser:
+        return redirect('dashboard:complaints')
+
+    if request.method == 'POST':
+        form = ComplaintForm(request.POST)
+        if form.is_valid():
+            complaint = form.save(commit=False)
+            complaint.user = request.user
+            complaint.save()
+            messages.success(request, 'Votre reclamation a ete envoyee a l\'administration.')
+            return redirect('accounts:complaints')
+    else:
+        form = ComplaintForm()
+
+    complaints = Complaint.objects.filter(user=request.user)[:6]
+    return render(request, 'accounts/complaints.html', {
+        'form': form,
+        'complaints': complaints,
+    })
 
 
 @staff_member_required(login_url=reverse_lazy('accounts:login'))

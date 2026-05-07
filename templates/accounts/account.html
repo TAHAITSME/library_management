@@ -2,76 +2,161 @@
 
 {% block title %}Espace client | BiblioNUM{% endblock %}
 
+{% block extra_css %}
+    {% include 'accounts/_client_profile_ui.html' %}
+{% endblock %}
+
 {% block content %}
-<header class="page-header">
-    <div>
-        <p class="eyebrow">Espace client</p>
-        <h1>Bonjour {{ user.first_name|default:user.username }}</h1>
-        <p>Suivez vos emprunts, reservations, commandes et activite de lecture.</p>
-    </div>
-    <a href="{% url 'catalog:books_list' %}" class="btn btn-primary">
-        <i class="fas fa-book-open"></i> Explorer
-    </a>
-</header>
-
-<section class="metric-grid section">
-    <div class="metric-card"><span>Emprunts actifs</span><strong>{{ active_borrows }}</strong></div>
-    <div class="metric-card"><span>Commandes</span><strong>{{ total_orders }}</strong></div>
-    <div class="metric-card"><span>Reservations actives</span><strong>{{ active_reservations }}</strong></div>
-    <div class="metric-card"><span>Total depense</span><strong>{{ total_spent }} DH</strong></div>
-</section>
-
-<section class="account-grid">
-    <article class="table-card">
-        <div class="table-card__header">
-            <h2>Commandes recentes</h2>
-            <a href="{% url 'orders:orders_list' %}">Tout voir</a>
+<div class="client-space-page">
+    <header class="page-header client-hero">
+        <div class="client-hero__identity">
+            <div class="client-avatar" aria-hidden="true">
+                {{ user.first_name|default:user.username|first|upper }}{{ user.last_name|first|upper }}
+            </div>
+            <div>
+                <p class="eyebrow">Espace client</p>
+                <h1>Bonjour {{ user.first_name|default:user.username }}</h1>
+                <p>Suivez vos livres empruntes, commandes, reservations et donnees de lecture.</p>
+            </div>
         </div>
-        {% if recent_orders %}
-            <table class="table-ui">
-                <thead><tr><th>Commande</th><th>Statut</th><th>Total</th></tr></thead>
-                <tbody>
-                {% for order in recent_orders %}
-                    <tr>
-                        <td><strong>{{ order.order_number }}</strong><small>{{ order.created_at|date:"d/m/Y" }}</small></td>
-                        <td><span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span></td>
-                        <td>{{ order.total }} DH</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            {% include 'components/empty_state.html' with icon='receipt' title='Aucune commande' message='Vos achats apparaitront ici.' %}
-        {% endif %}
-    </article>
+        <a href="{% url 'catalog:books_list' %}" class="client-hero__button">
+            <i data-lucide="book-open"></i> Explorer
+        </a>
+    </header>
 
-    <article class="table-card">
-        <div class="table-card__header">
-            <h2>Emprunts recents</h2>
-            <a href="{% url 'borrowing:borrow_list' %}">Tout voir</a>
+    <section class="metric-grid client-metrics section">
+        <div class="metric-card client-metric client-metric--blue" data-stagger>
+            <span class="client-metric__icon"><i data-lucide="book-open-check"></i></span>
+            <strong data-count-value="{{ active_borrows }}">0</strong>
+            <span>Emprunts actifs</span>
         </div>
-        {% if recent_borrows %}
-            <table class="table-ui">
-                <thead><tr><th>Livre</th><th>Retour prevu</th><th>Statut</th></tr></thead>
-                <tbody>
-                {% for borrow in recent_borrows %}
-                    <tr>
-                        <td><strong>{{ borrow.book.title }}</strong></td>
-                        <td>{{ borrow.due_date|date:"d/m/Y" }}</td>
-                        <td><span class="badge badge-{{ borrow.status }}">{{ borrow.get_status_display }}</span></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            {% include 'components/empty_state.html' with icon='book' title='Aucun emprunt' message='Empruntez un livre depuis le catalogue.' %}
-        {% endif %}
-    </article>
-</section>
+        <div class="metric-card client-metric client-metric--green" data-stagger>
+            <span class="client-metric__icon"><i data-lucide="shopping-bag"></i></span>
+            <strong data-count-value="{{ ordered_books }}">0</strong>
+            <span>Livres commandes</span>
+        </div>
+        <div class="metric-card client-metric client-metric--amber" data-stagger>
+            <span class="client-metric__icon"><i data-lucide="bookmark"></i></span>
+            <strong data-count-value="{{ active_reservations }}">0</strong>
+            <span>Reservations actives</span>
+        </div>
+        <div class="metric-card client-metric client-metric--purple" data-stagger>
+            <span class="client-metric__icon"><i data-lucide="wallet-cards"></i></span>
+            <strong data-count-value="{{ total_spent }}" data-count-suffix=" DH">0 DH</strong>
+            <span>Total depense</span>
+        </div>
+    </section>
 
-<section class="section quick-actions">
-    <a href="{% url 'accounts:profile' %}" class="data-card data-card__body"><i class="fas fa-id-card"></i><strong>Profil</strong><span>Consulter vos informations</span></a>
-    <a href="{% url 'accounts:profile_edit' %}" class="data-card data-card__body"><i class="fas fa-pen"></i><strong>Modifier</strong><span>Mettre a jour le profil</span></a>
-    <a href="{% url 'reservations:list' %}" class="data-card data-card__body"><i class="fas fa-bookmark"></i><strong>Reservations</strong><span>Suivre la file d'attente</span></a>
-</section>
+    <section class="account-grid client-tables">
+        <article class="table-card client-table-card" data-stagger>
+            <div class="table-card__header">
+                <h2>Livres commandes recents</h2>
+                <a href="{% url 'orders:orders_list' %}">Tout voir</a>
+            </div>
+            {% if recent_order_items %}
+                <table class="table-ui">
+                    <thead><tr><th>Livre</th><th>Commande</th><th>Total</th></tr></thead>
+                    <tbody>
+                    {% for item in recent_order_items %}
+                        <tr>
+                            <td>
+                                <strong><a href="{% url 'catalog:book_detail' item.book.slug %}">{{ item.book.title }}</a></strong>
+                                <small>{{ item.book.author }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ item.order.order_number }}</strong>
+                                <small>{{ item.order.created_at|date:"d/m/Y" }}</small>
+                            </td>
+                            <td>{{ item.get_total }} DH</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                {% include 'components/empty_state.html' with icon='receipt' title='Aucun livre commande' message='Les livres achetes ou commandes apparaitront ici.' %}
+            {% endif %}
+        </article>
+
+        <article class="table-card client-table-card" data-stagger>
+            <div class="table-card__header">
+                <h2>Emprunts recents</h2>
+                <a href="{% url 'borrowing:borrow_list' %}">Tout voir</a>
+            </div>
+            {% if recent_borrows %}
+                <table class="table-ui">
+                    <thead><tr><th>Livre</th><th>Retour prevu</th><th>Statut</th></tr></thead>
+                    <tbody>
+                    {% for borrow in recent_borrows %}
+                        <tr>
+                            <td><strong><a href="{% url 'catalog:book_detail' borrow.book.slug %}">{{ borrow.book.title }}</a></strong></td>
+                            <td>{{ borrow.due_date|date:"d/m/Y" }}</td>
+                            <td><span class="badge badge-{{ borrow.status }}">{{ borrow.get_status_display }}</span></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                {% include 'components/empty_state.html' with icon='book' title='Aucun emprunt' message='Empruntez un livre depuis le catalogue.' %}
+            {% endif %}
+        </article>
+    </section>
+
+    <section class="section quick-actions client-shortcuts">
+        <a href="{% url 'catalog:books_list' %}" class="data-card data-card__body" data-stagger>
+            <i data-lucide="library-big"></i>
+            <strong>Catalogue</strong>
+            <span>Trouver un livre</span>
+        </a>
+        <a href="{% url 'borrowing:borrow_list' %}" class="data-card data-card__body" data-stagger>
+            <i data-lucide="hand-heart"></i>
+            <strong>Emprunts</strong>
+            <span>Voir les livres empruntes</span>
+        </a>
+        <a href="{% url 'reservations:list' %}" class="data-card data-card__body" data-stagger>
+            <i data-lucide="bookmark-check"></i>
+            <strong>Reservations</strong>
+            <span>Suivre la file d'attente</span>
+        </a>
+        <a href="{% url 'accounts:complaints' %}" class="data-card data-card__body" data-stagger>
+            <i data-lucide="message-square-warning"></i>
+            <strong>Reclamation</strong>
+            <span>Signaler un probleme</span>
+        </a>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>
+    (() => {
+        if (window.lucide) window.lucide.createIcons();
+
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const counters = document.querySelectorAll('[data-count-value]');
+        const formatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
+
+        counters.forEach((counter) => {
+            const target = Number(String(counter.dataset.countValue).replace(',', '.')) || 0;
+            const suffix = counter.dataset.countSuffix || '';
+
+            if (reduceMotion) {
+                counter.textContent = `${formatter.format(target)}${suffix}`;
+                return;
+            }
+
+            const start = performance.now();
+            const duration = 1200;
+
+            const tick = (now) => {
+                const progress = Math.min((now - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                counter.textContent = `${formatter.format(target * eased)}${suffix}`;
+                if (progress < 1) requestAnimationFrame(tick);
+            };
+
+            requestAnimationFrame(tick);
+        });
+    })();
+</script>
 {% endblock %}

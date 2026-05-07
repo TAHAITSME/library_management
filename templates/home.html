@@ -483,6 +483,15 @@
     transition: transform 500ms ease;
   }
 
+  .trend-card__placeholder {
+    min-height: 420px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #273790, #111827 58%, #0f766e);
+    color: rgb(255 255 255 / 82%);
+    font-size: 3rem;
+  }
+
   .trend-card:hover img {
     transform: scale(1.06);
   }
@@ -961,65 +970,35 @@
         </button>
         <div class="book-carousel__viewport">
           <div class="book-showcase" data-carousel-track>
-            <article class="trend-card reveal">
-              <img src="https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=700&q=80" alt="Livre de design">
-              <div class="trend-card__body">
-                <span>Design</span>
-                <h3>Design Systems</h3>
-                <p>Concevoir des interfaces coherentes.</p>
-                <a href="{% url 'catalog:books_list' %}">Voir</a>
-              </div>
-            </article>
-
-            <article class="trend-card reveal">
-              <img src="https://images.unsplash.com/photo-1526243741027-444d633d7365?auto=format&fit=crop&w=700&q=80" alt="Bibliotheque">
-              <div class="trend-card__body">
-                <span>Tech</span>
-                <h3>Django Pro</h3>
-                <p>Construire des applications robustes.</p>
-                <a href="{% url 'catalog:books_list' %}">Voir</a>
-              </div>
-            </article>
-
-            <article class="trend-card reveal">
-              <img src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=700&q=80" alt="Lecture">
-              <div class="trend-card__body">
-                <span>Science</span>
-                <h3>Cosmos</h3>
-                <p>Comprendre les grandes idees scientifiques.</p>
-                <a href="{% url 'catalog:books_list' %}">Voir</a>
-              </div>
-            </article>
-
-            <article class="trend-card reveal">
-              <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=700&q=80" alt="Rayonnage de bibliotheque">
-              <div class="trend-card__body">
-                <span>Culture</span>
-                <h3>Selection du moment</h3>
-                <p>Des livres utiles pour apprendre.</p>
-                <a href="{% url 'catalog:books_list' %}">Voir</a>
-              </div>
-            </article>
-
-            <article class="trend-card reveal">
-              <img src="https://images.unsplash.com/photo-1519682337058-a94d519337bc?auto=format&fit=crop&w=700&q=80" alt="Lecture au calme">
-              <div class="trend-card__body">
-                <span>Roman</span>
-                <h3>Lectures du soir</h3>
-                <p>Des histoires pour se plonger dans un autre univers.</p>
-                <a href="{% url 'catalog:books_list' %}">Voir</a>
-              </div>
-            </article>
-
-            <article class="trend-card reveal">
-              <img src="https://images.unsplash.com/photo-1455885666463-9b9fb1c4e1b5?auto=format&fit=crop&w=700&q=80" alt="Livres empiles">
-              <div class="trend-card__body">
-                <span>Manuels</span>
-                <h3>Apprendre vite</h3>
-                <p>Des ressources pratiques pour progresser.</p>
-                <a href="{% url 'catalog:books_list' %}">Voir</a>
-              </div>
-            </article>
+            {% for book in featured_books %}
+              <article class="trend-card reveal">
+                {% if book.get_cover_image_url %}
+                  <img src="{{ book.get_cover_image_url }}" alt="{{ book.title }}">
+                {% else %}
+                  <div class="trend-card__placeholder">
+                    <i class="fas fa-book-open"></i>
+                  </div>
+                {% endif %}
+                <div class="trend-card__body">
+                  <span>{{ book.category.name|default:"Livre" }}</span>
+                  <h3>{{ book.title }}</h3>
+                  <p>{{ book.description|truncatechars:80 }}</p>
+                  <a href="{% url 'catalog:book_detail' book.slug %}">Voir</a>
+                </div>
+              </article>
+            {% empty %}
+              <article class="trend-card reveal">
+                <div class="trend-card__placeholder">
+                  <i class="fas fa-book-open"></i>
+                </div>
+                <div class="trend-card__body">
+                  <span>Catalogue</span>
+                  <h3>Aucun livre disponible</h3>
+                  <p>Ajoutez des livres au catalogue pour les afficher ici.</p>
+                  <a href="{% url 'catalog:books_list' %}">Voir</a>
+                </div>
+              </article>
+            {% endfor %}
           </div>
         </div>
         <button class="carousel-btn carousel-btn--next" type="button" data-carousel-next aria-label="Livre suivant">

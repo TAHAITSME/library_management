@@ -37,15 +37,18 @@
         <h2>Resume</h2>
         <div class="summary-row"><span>Sous-total</span><strong>{{ order.subtotal }} DH</strong></div>
         <div class="summary-row"><span>Livraison</span><strong>{{ order.shipping_cost }} DH</strong></div>
+        {% if order.discount %}
+            <div class="summary-row"><span>Remise fidelite</span><strong>-{{ order.discount }} DH</strong></div>
+        {% endif %}
         <div class="summary-row"><span>Paiement</span><span class="badge badge-{{ order.payment_status }}">{{ order.get_payment_status_display }}</span></div>
         <div class="summary-row summary-total"><span>Total</span><strong>{{ order.total }} DH</strong></div>
+        <a href="{% url 'orders:order_pdf' order.id %}" class="btn btn-secondary">
+            <i class="fas fa-file-pdf"></i> Telecharger le PDF
+        </a>
         {% if order.payment_status != 'paid' %}
             <a href="{% url 'orders:order_payment' order.id %}" class="btn btn-primary">
                 <i class="fas fa-credit-card"></i> Payer avec Stripe
             </a>
-        {% endif %}
-        {% if order.invoice %}
-            <a href="{% url 'orders:orders_list' %}" class="btn btn-ghost">Facture generee</a>
         {% endif %}
     </aside>
 </div>

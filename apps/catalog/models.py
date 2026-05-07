@@ -98,12 +98,22 @@ class Book(models.Model):
             return ''
 
         image_name = str(self.cover_image)
+        if image_name.startswith('/media/http'):
+            image_name = image_name.removeprefix('/media/')
+        if image_name.startswith('http:/') and not image_name.startswith('http://'):
+            image_name = image_name.replace('http:/', 'http://', 1)
+        if image_name.startswith('https:/') and not image_name.startswith('https://'):
+            image_name = image_name.replace('https:/', 'https://', 1)
+
         parsed = urlparse(image_name)
         if parsed.scheme in ('http', 'https'):
             return image_name
 
         try:
-            return self.cover_image.url
+            image_url = self.cover_image.url
+            if image_url.startswith('/media/http'):
+                return image_url.removeprefix('/media/')
+            return image_url
         except ValueError:
             return ''
 

@@ -332,24 +332,26 @@
                     <i class="fas fa-book fa-3x"></i>
                 {% endif %}
             </div>
-            <div class="book-actions">
-                {% if book.is_available %}
-                    <form method="post" action="{% url 'cart:add_to_cart' book.id %}">
+            {% if not user.is_staff %}
+                <div class="book-actions">
+                    {% if book.is_available %}
+                        <form method="post" action="{% url 'cart:add_to_cart' book.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-primary" type="submit"><i class="fas fa-cart-plus"></i> Ajouter au panier</button>
+                        </form>
+                        <form method="post" action="{% url 'borrowing:borrow_request' book.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-secondary" type="submit"><i class="fas fa-hand-holding-heart"></i> Demander un emprunt</button>
+                        </form>
+                    {% else %}
+                        <button class="btn btn-secondary" type="button" disabled><i class="fas fa-ban"></i> Indisponible</button>
+                    {% endif %}
+                    <form method="post" action="{% url 'reservations:create' book.id %}">
                         {% csrf_token %}
-                        <button class="btn btn-primary" type="submit"><i class="fas fa-cart-plus"></i> Ajouter au panier</button>
+                        <button class="btn btn-ghost" type="submit"><i class="fas fa-bookmark"></i> Reserver</button>
                     </form>
-                    <form method="post" action="{% url 'borrowing:borrow_request' book.id %}">
-                        {% csrf_token %}
-                        <button class="btn btn-secondary" type="submit"><i class="fas fa-hand-holding-heart"></i> Demander un emprunt</button>
-                    </form>
-                {% else %}
-                    <button class="btn btn-secondary" type="button" disabled><i class="fas fa-ban"></i> Indisponible</button>
-                {% endif %}
-                <form method="post" action="{% url 'reservations:create' book.id %}">
-                    {% csrf_token %}
-                    <button class="btn btn-ghost" type="submit"><i class="fas fa-bookmark"></i> Reserver</button>
-                </form>
-            </div>
+                </div>
+            {% endif %}
         </aside>
 
         <main class="book-main-panel">
@@ -387,60 +389,62 @@
                 </div>
             </section>
 
-            <section class="book-section">
-                <div class="section-header">
-                    <div>
-                        <p class="eyebrow">Avis lecteurs</p>
-                        <h2>{{ book.reviews.count }} avis</h2>
-                    </div>
-                </div>
-
-                <div class="reviews-layout">
-                    {% if user.is_authenticated %}
-                        <form class="review-form-card" method="post" action="{% url 'catalog:add_review' book.id %}">
-                            {% csrf_token %}
-                            <div class="form-field">
-                                <label>Votre note</label>
-                                <div class="rating-picker">
-                                    {% for value in "12345" %}
-                                        <input type="radio" name="rating" value="{{ value }}" id="rating_{{ value }}" required {% if user_review and user_review.rating|stringformat:'s' == value %}checked{% endif %}>
-                                        <label for="rating_{{ value }}">{{ value }} <i class="fas fa-star"></i></label>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="form-field">
-                                <label for="id_comment">Commentaire</label>
-                                <textarea class="textarea" id="id_comment" name="comment" placeholder="Partagez votre avis sur ce livre...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
-                            </div>
-                            <button class="btn btn-primary" type="submit">Publier l'avis</button>
-                        </form>
-                    {% else %}
-                        <div class="reviews-empty">
-                            <i class="fas fa-lock"></i>
-                            <strong>Connectez-vous pour donner votre avis.</strong>
-                            <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm">Connexion</a>
+            {% if not user.is_staff %}
+                <section class="book-section">
+                    <div class="section-header">
+                        <div>
+                            <p class="eyebrow">Avis lecteurs</p>
+                            <h2>{{ book.reviews.count }} avis</h2>
                         </div>
-                    {% endif %}
-
-                    <div class="review-list-modern">
-                        {% for review in reviews %}
-                            <article class="review-card-modern">
-                                <div class="review-card-modern__head">
-                                    <strong>{{ review.user.username }}</strong>
-                                    <span class="badge badge-info">{{ review.rating }}/5</span>
-                                </div>
-                                <p>{{ review.comment|default:"Aucun commentaire." }}</p>
-                            </article>
-                        {% empty %}
-                            <div class="reviews-empty">
-                                <i class="fas fa-comment"></i>
-                                <strong>Aucun avis pour le moment.</strong>
-                                <span>Soyez le premier a partager votre avis.</span>
-                            </div>
-                        {% endfor %}
                     </div>
-                </div>
-            </section>
+
+                    <div class="reviews-layout">
+                        {% if user.is_authenticated %}
+                            <form class="review-form-card" method="post" action="{% url 'catalog:add_review' book.id %}">
+                                {% csrf_token %}
+                                <div class="form-field">
+                                    <label>Votre note</label>
+                                    <div class="rating-picker">
+                                        {% for value in "12345" %}
+                                            <input type="radio" name="rating" value="{{ value }}" id="rating_{{ value }}" required {% if user_review and user_review.rating|stringformat:'s' == value %}checked{% endif %}>
+                                            <label for="rating_{{ value }}">{{ value }} <i class="fas fa-star"></i></label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label for="id_comment">Commentaire</label>
+                                    <textarea class="textarea" id="id_comment" name="comment" placeholder="Partagez votre avis sur ce livre...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+                                </div>
+                                <button class="btn btn-primary" type="submit">Publier l'avis</button>
+                            </form>
+                        {% else %}
+                            <div class="reviews-empty">
+                                <i class="fas fa-lock"></i>
+                                <strong>Connectez-vous pour donner votre avis.</strong>
+                                <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm">Connexion</a>
+                            </div>
+                        {% endif %}
+
+                        <div class="review-list-modern">
+                            {% for review in reviews %}
+                                <article class="review-card-modern">
+                                    <div class="review-card-modern__head">
+                                        <strong>{{ review.user.username }}</strong>
+                                        <span class="badge badge-info">{{ review.rating }}/5</span>
+                                    </div>
+                                    <p>{{ review.comment|default:"Aucun commentaire." }}</p>
+                                </article>
+                            {% empty %}
+                                <div class="reviews-empty">
+                                    <i class="fas fa-comment"></i>
+                                    <strong>Aucun avis pour le moment.</strong>
+                                    <span>Soyez le premier a partager votre avis.</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </section>
+            {% endif %}
         </main>
     </div>
 </div>

@@ -41,6 +41,9 @@ def reservation_detail(request, pk):
 @require_http_methods(["GET", "POST"])
 def create_reservation(request, book_id):
     book = get_object_or_404(Book, pk=book_id)
+    if request.user.is_staff:
+        messages.warning(request, "Les comptes administrateur ne peuvent pas reserver un livre.")
+        return redirect('catalog:book_detail', slug=book.slug)
 
     existing = Reservation.objects.filter(
         user=request.user, book=book, status='active'

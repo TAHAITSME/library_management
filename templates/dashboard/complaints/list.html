@@ -1,0 +1,66 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}Reclamations{% endblock %}
+
+{% block dashboard_content %}
+<section class="kpi-grid kpi-grid-small">
+    <article class="kpi-card"><span>Nouvelles</span><strong>{{ new_count }}</strong></article>
+    <article class="kpi-card"><span>En cours</span><strong>{{ in_progress_count }}</strong></article>
+    <article class="kpi-card"><span>Resolues</span><strong>{{ resolved_count }}</strong></article>
+</section>
+
+<section class="dashboard-panel">
+    <form class="dashboard-filters" method="get">
+        <select class="dashboard-input" name="status">
+            <option value="">Tous les statuts</option>
+            <option value="new" {% if request.GET.status == 'new' %}selected{% endif %}>Nouvelles</option>
+            <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>En cours</option>
+            <option value="resolved" {% if request.GET.status == 'resolved' %}selected{% endif %}>Resolues</option>
+            <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>Fermees</option>
+        </select>
+        <select class="dashboard-input" name="priority">
+            <option value="">Toutes priorites</option>
+            <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Faible</option>
+            <option value="normal" {% if request.GET.priority == 'normal' %}selected{% endif %}>Normale</option>
+            <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>Haute</option>
+        </select>
+        <button class="btn btn-primary" type="submit"><i class="fas fa-filter"></i> Filtrer</button>
+        <a class="btn btn-ghost" href="{% url 'dashboard:complaints' %}">Reset</a>
+    </form>
+
+    <table class="dashboard-table">
+        <thead>
+            <tr>
+                <th>Sujet</th>
+                <th>Utilisateur</th>
+                <th>Categorie</th>
+                <th>Priorite</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for complaint in complaints %}
+                <tr>
+                    <td>
+                        <strong>{{ complaint.subject }}</strong>
+                        <small>{{ complaint.message|truncatechars:70 }}</small>
+                    </td>
+                    <td>{{ complaint.user.username }}</td>
+                    <td>{{ complaint.get_category_display }}</td>
+                    <td><span class="badge badge-{{ complaint.priority }}">{{ complaint.get_priority_display }}</span></td>
+                    <td><span class="badge badge-{{ complaint.status }}">{{ complaint.get_status_display }}</span></td>
+                    <td>{{ complaint.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="row-actions">
+                        <a href="{% url 'dashboard:complaint_detail' complaint.pk %}"><i class="fas fa-eye"></i></a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7">Aucune reclamation.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% include 'dashboard/pagination.html' %}
+</section>
+{% endblock %}

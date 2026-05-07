@@ -4,388 +4,401 @@
 
 {% block extra_css %}
 <style>
-  .payment-page {
+  .pay-page {
+    width: min(100%, 1240px);
     display: grid;
-    gap: 22px;
+    gap: 18px;
+    margin-inline: auto;
   }
 
-  .payment-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 24px;
-    align-items: end;
-    padding: clamp(24px, 4vw, 42px);
-    overflow: hidden;
-    border: 1px solid var(--app-border);
-    border-radius: 18px;
-    background:
-      radial-gradient(circle at 86% 16%, rgb(31 58 138 / 16%), transparent 32%),
-      linear-gradient(135deg, var(--app-surface), var(--app-primary-soft));
-    box-shadow: var(--app-shadow-sm);
+  .pay-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 24px 0 4px;
   }
 
-  .payment-hero h1 {
-    max-width: 760px;
+  .pay-header h1 {
+    max-width: 680px;
     margin: 0;
-    font-size: clamp(2.1rem, 5vw, 4.4rem);
-    line-height: .96;
-  }
-
-  .payment-hero p:not(.eyebrow) {
-    max-width: 620px;
-    margin-top: 12px;
-    color: var(--app-muted);
-    font-size: 1.02rem;
-  }
-
-  .payment-amount {
-    min-width: 190px;
-    padding: 18px;
-    border: 1px solid var(--app-border);
-    border-radius: var(--app-radius-lg);
-    background: var(--app-surface);
-    text-align: right;
-    box-shadow: var(--app-shadow-sm);
-  }
-
-  .payment-amount span {
-    display: block;
-    color: var(--app-muted);
-    font-size: .8rem;
-    font-weight: 900;
-    text-transform: uppercase;
-  }
-
-  .payment-amount strong {
-    display: block;
-    margin-top: 6px;
-    color: var(--app-text);
-    font-size: 2rem;
+    font-size: clamp(2rem, 4vw, 3.4rem);
     line-height: 1;
   }
 
-  .payment-layout {
+  .pay-header p {
+    margin: 10px 0 0;
+    color: var(--app-muted);
+    font-size: 1rem;
+  }
+
+  .pay-trust {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding-inline: 12px;
+    border: 1px solid var(--app-border);
+    border-radius: 999px;
+    background: var(--app-surface);
+    color: var(--app-success);
+    font-weight: 900;
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .pay-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 380px;
-    gap: 20px;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 22px;
     align-items: start;
   }
 
-  .payment-panel,
-  .checkout-summary {
+  .pay-card,
+  .pay-summary {
     border: 1px solid var(--app-border);
     border-radius: 18px;
     background: var(--app-surface);
     box-shadow: var(--app-shadow-sm);
   }
 
-  .payment-panel {
+  .pay-card {
     overflow: hidden;
+    min-height: 470px;
   }
 
-  .payment-panel__header {
+  .pay-card__top {
     padding: 22px;
     border-bottom: 1px solid var(--app-border);
+    background:
+      radial-gradient(circle at 92% 0%, rgb(79 152 163 / 14%), transparent 32%),
+      linear-gradient(180deg, #fff, color-mix(in srgb, var(--app-primary-soft) 34%, #fff));
   }
 
-  .payment-panel__header h2,
-  .checkout-summary h2 {
+  .pay-card__top h2 {
     margin: 0;
     font-size: 1.25rem;
   }
 
-  .payment-panel__header p {
-    margin-top: 8px;
+  .pay-card__top p {
+    margin: 8px 0 0;
     color: var(--app-muted);
   }
 
-  .payment-methods {
-    display: grid;
-    gap: 12px;
-    padding: 18px;
-  }
-
-  .payment-method {
-    position: relative;
+  .payment-choice {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 14px;
     align-items: center;
-    padding: 16px;
+    margin: 18px;
+    padding: 18px;
+    border: 1px solid color-mix(in srgb, var(--app-primary) 28%, var(--app-border));
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--app-primary-soft) 54%, #fff);
+  }
+
+  .order-context {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding: 0 18px 18px;
+  }
+
+  .order-context__item {
+    min-height: 84px;
+    display: grid;
+    align-content: center;
+    gap: 5px;
+    padding: 14px;
     border: 1px solid var(--app-border);
-    border-radius: var(--app-radius-lg);
+    border-radius: 14px;
     background: var(--app-surface);
   }
 
-  .payment-method.is-selected {
-    border-color: var(--app-primary);
-    background: color-mix(in srgb, var(--app-primary-soft) 70%, var(--app-surface));
-    box-shadow: var(--app-focus);
+  .order-context__item span {
+    color: var(--app-muted);
+    font-size: .76rem;
+    font-weight: 900;
+    text-transform: uppercase;
   }
 
-  .payment-method.is-disabled {
-    opacity: .62;
+  .order-context__item strong {
+    color: var(--app-text);
   }
 
-  .payment-method__icon {
-    width: 48px;
-    height: 48px;
+  .payment-choice__icon {
+    width: 52px;
+    height: 52px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--app-radius);
+    border-radius: 14px;
     background: var(--app-primary);
-    color: white;
+    color: #fff;
+    font-size: 1.2rem;
   }
 
-  .payment-method.is-disabled .payment-method__icon {
-    background: var(--app-surface-soft);
-    color: var(--app-muted);
-  }
-
-  .payment-method h3 {
+  .payment-choice h3 {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.05rem;
   }
 
-  .payment-method p {
-    margin: 4px 0 0;
+  .payment-choice p {
+    margin: 5px 0 0;
     color: var(--app-muted);
-    font-size: .9rem;
+    font-size: .92rem;
   }
 
-  .payment-method__badge {
-    padding: 7px 10px;
+  .payment-choice__badge {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding-inline: 10px;
     border-radius: 999px;
     background: var(--app-success-soft);
     color: var(--app-success);
-    font-size: .74rem;
+    font-size: .76rem;
     font-weight: 900;
   }
 
-  .payment-method.is-disabled .payment-method__badge {
-    background: var(--app-surface-soft);
-    color: var(--app-muted);
-  }
-
-  .payment-actions {
+  .pay-actions {
     display: grid;
     gap: 10px;
     padding: 18px;
     border-top: 1px solid var(--app-border);
-    background: var(--app-surface-soft);
+    background: color-mix(in srgb, var(--app-surface-soft) 68%, #fff);
   }
 
-  .payment-actions .btn {
+  .pay-actions .btn {
     width: 100%;
+    min-height: 46px;
   }
 
-  .payment-note {
+  .pay-security {
     display: flex;
-    gap: 10px;
     align-items: flex-start;
+    gap: 8px;
+    margin: 0;
     color: var(--app-muted);
-    font-size: .9rem;
+    font-size: .88rem;
   }
 
-  .payment-note i {
-    margin-top: 2px;
+  .pay-security i {
+    margin-top: 3px;
     color: var(--app-success);
   }
 
-  .checkout-summary {
+  .pay-summary {
     position: sticky;
     top: 88px;
     overflow: hidden;
   }
 
-  .checkout-summary__head {
-    padding: 20px;
+  .pay-summary__head {
+    padding: 18px;
     border-bottom: 1px solid var(--app-border);
   }
 
-  .checkout-items {
-    display: grid;
-    gap: 12px;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--app-border);
+  .pay-summary__head h2 {
+    margin: 0;
+    font-size: 1.1rem;
   }
 
-  .checkout-item {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-    align-items: start;
-  }
-
-  .checkout-item strong {
+  .pay-summary__head small {
     display: block;
+    margin-top: 4px;
+    color: var(--app-accent);
+    font-weight: 900;
+  }
+
+  .pay-items {
+    display: grid;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--app-border);
+  }
+
+  .pay-item {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .pay-item__cover {
+    width: 58px;
+    height: 78px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--app-surface-soft);
+    color: var(--app-faint);
+  }
+
+  .pay-item__cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .pay-item__meta {
+    min-width: 0;
+  }
+
+  .pay-item strong,
+  .pay-line strong {
     color: var(--app-text);
   }
 
-  .checkout-item span,
-  .checkout-item small {
+  .pay-item strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pay-item span,
+  .pay-item small,
+  .pay-line span {
     color: var(--app-muted);
-    font-size: .86rem;
+    font-size: .88rem;
   }
 
-  .checkout-lines {
-    padding: 8px 20px 20px;
+  .pay-lines {
+    padding: 8px 18px 18px;
   }
 
-  .checkout-line {
+  .pay-line {
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    padding-block: 11px;
+    padding-block: 10px;
     border-bottom: 1px solid var(--app-border);
-    color: var(--app-muted);
   }
 
-  .checkout-line strong {
-    color: var(--app-text);
-  }
-
-  .checkout-line:last-child {
+  .pay-line:last-child {
     border-bottom: 0;
   }
 
-  .checkout-total {
-    font-size: 1.18rem;
+  .pay-total {
+    margin-top: 6px;
+    padding-top: 14px;
+    font-size: 1.15rem;
     font-weight: 900;
   }
 
-  .payment-steps {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .payment-step {
-    padding: 14px;
-    border: 1px solid var(--app-border);
-    border-radius: var(--app-radius-lg);
-    background: var(--app-surface);
-    box-shadow: var(--app-shadow-sm);
-  }
-
-  .payment-step span {
-    display: inline-flex;
-    margin-bottom: 8px;
-    color: var(--app-primary);
-    font-weight: 900;
-  }
-
-  .payment-step p {
-    margin: 0;
-    color: var(--app-muted);
-  }
-
-  @media (max-width: 980px) {
-    .payment-layout,
-    .payment-hero {
+  @media (max-width: 900px) {
+    .pay-layout,
+    .pay-header {
       grid-template-columns: 1fr;
+      flex-direction: column;
+      align-items: flex-start;
     }
 
-    .payment-amount {
-      text-align: left;
-    }
-
-    .checkout-summary {
+    .pay-summary {
       position: static;
     }
   }
 
-  @media (max-width: 680px) {
-    .payment-method {
+  @media (max-width: 620px) {
+    .order-context {
+      grid-template-columns: 1fr;
+    }
+
+    .pay-item {
+      grid-template-columns: 48px minmax(0, 1fr);
+    }
+
+    .pay-item > small {
+      grid-column: 2;
+    }
+
+    .payment-choice {
       grid-template-columns: auto minmax(0, 1fr);
     }
 
-    .payment-method__badge {
+    .payment-choice__badge {
       grid-column: 1 / -1;
       width: fit-content;
-    }
-
-    .payment-steps {
-      grid-template-columns: 1fr;
     }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="payment-page">
-    <header class="payment-hero">
+<div class="pay-page">
+    <header class="pay-header">
         <div>
-            <p class="eyebrow">Paiement securise</p>
-            <h1>Finalisez votre commande.</h1>
-            <p>Vous serez redirige vers Stripe Checkout pour saisir vos informations bancaires en toute securite.</p>
+            <p class="eyebrow">Paiement</p>
+            <h1>Payer votre commande</h1>
+            <p>Confirmez le montant et continuez vers le paiement securise.</p>
         </div>
-        <div class="payment-amount">
-            <span>Total a payer</span>
-            <strong>{{ order.total }} DH</strong>
-        </div>
+        <span class="pay-trust"><i class="fas fa-shield-halved"></i> Paiement securise</span>
     </header>
 
-    <div class="payment-layout">
-        <section class="payment-panel">
-            <div class="payment-panel__header">
-                <h2>Methode de paiement</h2>
-                <p>Choisissez une methode disponible pour cette commande.</p>
+    <div class="pay-layout">
+        <section class="pay-card">
+            <div class="pay-card__top">
+                <h2>Carte bancaire</h2>
+                <p>Un paiement rapide et securise pour finaliser votre achat.</p>
             </div>
 
-            <div class="payment-methods">
-                <article class="payment-method is-selected">
-                    <span class="payment-method__icon"><i class="fas fa-credit-card"></i></span>
-                    <div>
-                        <h3>Carte bancaire via Stripe</h3>
-                        <p>Visa, Mastercard et cartes compatibles. Paiement confirme automatiquement.</p>
-                    </div>
-                    <span class="payment-method__badge">Disponible</span>
-                </article>
+            <article class="payment-choice">
+                <span class="payment-choice__icon"><i class="fas fa-credit-card"></i></span>
+                <div>
+                    <h3>Carte bancaire</h3>
+                    <p>Visa, Mastercard et cartes compatibles.</p>
+                </div>
+                <span class="payment-choice__badge">Disponible</span>
+            </article>
 
-                <article class="payment-method is-disabled" aria-disabled="true">
-                    <span class="payment-method__icon"><i class="fas fa-building-columns"></i></span>
-                    <div>
-                        <h3>Virement bancaire</h3>
-                        <p>Activation manuelle par l'administration.</p>
-                    </div>
-                    <span class="payment-method__badge">Bientot</span>
-                </article>
-
-                <article class="payment-method is-disabled" aria-disabled="true">
-                    <span class="payment-method__icon"><i class="fas fa-money-bill-wave"></i></span>
-                    <div>
-                        <h3>Paiement a la livraison</h3>
-                        <p>Option reservee aux retraits valides par la bibliotheque.</p>
-                    </div>
-                    <span class="payment-method__badge">Bientot</span>
-                </article>
+            <div class="order-context" aria-label="Informations commande">
+                <div class="order-context__item">
+                    <span>Commande</span>
+                    <strong>{{ order.order_number }}</strong>
+                </div>
+                <div class="order-context__item">
+                    <span>Articles</span>
+                    <strong>{{ order.items.count }} livre(s)</strong>
+                </div>
+                <div class="order-context__item">
+                    <span>Livraison</span>
+                    <strong>{{ order.shipping_cost }} DH</strong>
+                </div>
             </div>
 
-            <form class="payment-actions" method="post" action="{% url 'orders:stripe_checkout' order.id %}">
+            <form class="pay-actions" method="post" action="{% url 'orders:stripe_checkout' order.id %}">
                 {% csrf_token %}
                 <button class="btn btn-primary" type="submit">
-                    <i class="fas fa-lock"></i> Continuer vers Stripe
+                    <i class="fas fa-lock"></i> Payer {{ order.total }} DH
                 </button>
                 <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost">Retour a la commande</a>
-                <p class="payment-note">
-                    <i class="fas fa-shield-halved"></i>
-                    <span>BiblioNUM ne stocke aucune donnee bancaire. Le paiement est traite par Stripe.</span>
+                <p class="pay-security">
+                    <i class="fas fa-circle-check"></i>
+                    <span>Vos informations bancaires ne sont jamais stockees par BiblioNUM.</span>
                 </p>
             </form>
         </section>
 
-        <aside class="checkout-summary">
-            <div class="checkout-summary__head">
+        <aside class="pay-summary">
+            <div class="pay-summary__head">
                 <h2>Resume</h2>
-                <p class="eyebrow">{{ order.order_number }}</p>
+                <small>{{ order.order_number }}</small>
             </div>
 
-            <div class="checkout-items">
+            <div class="pay-items">
                 {% for item in order.items.all %}
-                    <div class="checkout-item">
-                        <div>
+                    <div class="pay-item">
+                        <span class="pay-item__cover">
+                            {% if item.book.get_cover_image_url %}
+                                <img src="{{ item.book.get_cover_image_url }}" alt="{{ item.book.title }}">
+                            {% else %}
+                                <i class="fas fa-book-open"></i>
+                            {% endif %}
+                        </span>
+                        <div class="pay-item__meta">
                             <strong>{{ item.book.title }}</strong>
                             <span>{{ item.quantity }} x {{ item.price }} DH</span>
                         </div>
@@ -394,28 +407,15 @@
                 {% endfor %}
             </div>
 
-            <div class="checkout-lines">
-                <div class="checkout-line"><span>Sous-total</span><strong>{{ order.subtotal }} DH</strong></div>
-                <div class="checkout-line"><span>Livraison</span><strong>{{ order.shipping_cost }} DH</strong></div>
-                <div class="checkout-line"><span>Statut</span><span class="badge badge-{{ order.payment_status }}">{{ order.get_payment_status_display }}</span></div>
-                <div class="checkout-line checkout-total"><span>Total</span><strong>{{ order.total }} DH</strong></div>
+            <div class="pay-lines">
+                <div class="pay-line"><span>Sous-total</span><strong>{{ order.subtotal }} DH</strong></div>
+                <div class="pay-line"><span>Livraison</span><strong>{{ order.shipping_cost }} DH</strong></div>
+                {% if order.discount %}
+                    <div class="pay-line"><span>Remise fidelite</span><strong>-{{ order.discount }} DH</strong></div>
+                {% endif %}
+                <div class="pay-line pay-total"><span>Total</span><strong>{{ order.total }} DH</strong></div>
             </div>
         </aside>
     </div>
-
-    <section class="payment-steps" aria-label="Etapes du paiement">
-        <article class="payment-step">
-            <span>01</span>
-            <p>Verification de la commande et du montant.</p>
-        </article>
-        <article class="payment-step">
-            <span>02</span>
-            <p>Redirection vers Stripe Checkout.</p>
-        </article>
-        <article class="payment-step">
-            <span>03</span>
-            <p>Confirmation automatique apres paiement.</p>
-        </article>
-    </section>
 </div>
 {% endblock %}

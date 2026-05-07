@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from apps.catalog.models import Book
+from apps.orders.views import calculate_order_pricing
 from .models import Cart, CartItem
 
 
@@ -10,11 +11,12 @@ def cart_view(request):
     cart, _ = Cart.objects.get_or_create(user=request.user)
     cart_items = cart.items.select_related('book').all()
     total = sum(item.get_total() for item in cart_items)
+    pricing = calculate_order_pricing(request.user, total)
 
     return render(request, 'cart/cart.html', {
         'cart': cart,
         'cart_items': cart_items,
-        'total': total,
+        **pricing,
         'item_count': cart.get_item_count(),
     })
 
@@ -25,6 +27,10 @@ def add_to_cart(request, book_id):
         return redirect('catalog:books_list')
 
     book = get_object_or_404(Book, id=book_id)
+    if request.user.is_staff:
+        messages.warning(request, "Les comptes administrateur ne peuvent pas ajouter des livres au panier.")
+        return redirect('catalog:book_detail', slug=book.slug)
+
     cart, _ = Cart.objects.get_or_create(user=request.user)
 
     if not book.is_available():

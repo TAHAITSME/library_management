@@ -38,4 +38,6 @@ urlpatterns = [
     path('users/', views.UserListView.as_view(), name='users'),
     path('users/<int:pk>/', views.UserDetailView.as_view(), name='user_detail'),
     path('users/<int:pk>/edit/', views.UserUpdateView.as_view(), name='user_edit'),
+    path('reclamations/', views.ComplaintListView.as_view(), name='complaints'),
+    path('reclamations/<int:pk>/', views.ComplaintUpdateView.as_view(), name='complaint_detail'),
 ]

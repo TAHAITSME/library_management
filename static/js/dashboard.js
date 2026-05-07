@@ -106,29 +106,44 @@
     var ctx = setup.ctx;
     var width = setup.width;
     var height = setup.height;
-    var padding = { top: 18, right: 16, bottom: 24, left: 18 };
+    var padding = { top: 22, right: 16, bottom: 54, left: 28 };
+    var isDark = canvas.dataset.tone === 'dark';
 
     if (!data.length) {
       drawEmpty(ctx);
       return;
     }
 
+    drawGrid(ctx, width, height, padding);
+
     var max = Math.max.apply(null, data.map(function (item) { return Number(item.value) || 0; })) || 1;
     var plotW = width - padding.left - padding.right;
     var plotH = height - padding.top - padding.bottom;
-    var gap = 8;
+    var gap = 10;
     var barW = Math.max(12, (plotW - gap * (data.length - 1)) / data.length);
+    var gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
+    gradient.addColorStop(0, isDark ? '#42a5f5' : 'rgba(255,255,255,.92)');
+    gradient.addColorStop(1, isDark ? '#22c7a9' : 'rgba(255,255,255,.62)');
 
     data.forEach(function (item, index) {
       var value = Number(item.value) || 0;
       var barH = plotH * value / max;
       var x = padding.left + index * (barW + gap);
       var y = padding.top + plotH - barH;
-      ctx.fillStyle = 'rgba(255,255,255,.86)';
+      ctx.fillStyle = gradient;
       ctx.fillRect(x, y, barW, barH);
-      ctx.fillStyle = 'rgba(255,255,255,.72)';
+      ctx.fillStyle = isDark ? '#253244' : 'rgba(255,255,255,.86)';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText(String(Math.round(value)), x, Math.max(14, y - 6));
+
+      var label = String(item.label || '').slice(0, 14);
+      ctx.save();
+      ctx.translate(x + Math.min(barW / 2, 24), height - 10);
+      ctx.rotate(-0.45);
+      ctx.fillStyle = isDark ? '#8a96a8' : 'rgba(255,255,255,.75)';
       ctx.font = '10px Inter, sans-serif';
-      ctx.fillText(String(value), x, Math.max(12, y - 5));
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
     });
   }
 

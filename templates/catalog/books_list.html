@@ -24,103 +24,170 @@
 </section>
 
 <main class="catalog-event-page">
-    <section class="catalog-filter-card">
-        <div class="catalog-filter-card__head">
-            <h2><i class="fas fa-filter"></i> Filtrer par categorie</h2>
-            <span>{{ books_count|default:books|length }} livre(s)</span>
-        </div>
-        <div class="category-pills">
-            <a href="{% url 'catalog:books_list' %}"
-               class="category-pill {% if not current_category %}is-active{% endif %}">
-                <i class="fas fa-border-all"></i> Tous les livres
-            </a>
-            {% for category in categories %}
-                <a href="?category={{ category.id }}"
-                   class="category-pill {% if current_category == category.id|stringformat:'s' %}is-active{% endif %}">
-                    <i class="{% if category.icon %}{{ category.icon }}{% else %}fas fa-tag{% endif %}"></i>
-                    {{ category.name }}
-                </a>
-            {% endfor %}
-        </div>
-    </section>
-
     <section class="catalog-tools">
-        <form method="get" class="catalog-tools__form">
-            {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
-            <input type="search" name="q" value="{{ query }}" placeholder="Titre, auteur, ISBN">
-            <select name="author">
+        <form method="get" class="catalog-tools__form" data-live-filter-form>
+            <div class="catalog-tools__search">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="search" name="q" value="{{ query }}" placeholder="Titre, auteur, ISBN" autocomplete="off" data-live-search>
+            </div>
+            <select name="category" aria-label="Categorie">
+                <option value="">Toutes les categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if current_category == category.id|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="author" aria-label="Auteur">
                 <option value="">Tous les auteurs</option>
                 {% for author in authors %}
                     <option value="{{ author.id }}" {% if current_author == author.id|stringformat:"s" %}selected{% endif %}>{{ author }}</option>
                 {% endfor %}
             </select>
-            <select name="sort">
+            <select name="sort" aria-label="Tri">
                 <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Plus recents</option>
                 <option value="title" {% if current_sort == 'title' %}selected{% endif %}>Titre A-Z</option>
                 <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Prix croissant</option>
                 <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Prix decroissant</option>
                 <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Mieux notes</option>
             </select>
-            <button type="submit"><i class="fas fa-sliders"></i> Appliquer</button>
+            <span class="catalog-tools__count">{{ books_count|default:books|length }} livre(s)</span>
+            <button type="submit" class="catalog-tools__submit"><i class="fas fa-sliders"></i> Appliquer</button>
         </form>
     </section>
 
-    {% if books %}
-        <section class="event-book-grid">
-            {% for book in books %}
-                <article class="event-book-card">
-                    <a href="{% url 'catalog:book_detail' book.slug %}" class="event-book-card__cover">
-                        {% if book.get_cover_image_url %}
-                            <img src="{{ book.get_cover_image_url }}" alt="{{ book.title }}">
-                        {% else %}
-                            <div class="event-book-card__placeholder">
-                                <i class="fas fa-book-open"></i>
+    <div data-catalog-results>
+        {% if books %}
+            <section class="event-book-grid">
+                {% for book in books %}
+                    <article class="event-book-card">
+                        <a href="{% url 'catalog:book_detail' book.slug %}" class="event-book-card__cover">
+                            {% if book.get_cover_image_url %}
+                                <img src="{{ book.get_cover_image_url }}" alt="{{ book.title }}">
+                            {% else %}
+                                <div class="event-book-card__placeholder">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
+                            {% endif %}
+                            <span class="event-book-card__badge">{{ book.category.name|default:"Livre" }}</span>
+                        </a>
+
+                        <div class="event-book-card__body">
+                            <h2>{{ book.title }}</h2>
+                            <div class="event-book-meta">
+                                <span><i class="fas fa-user-pen"></i> {{ book.author }}</span>
+                                <span><i class="fas fa-calendar-days"></i> {{ book.publication_date|date:"Y" }}</span>
+                                <span><i class="fas fa-tag"></i> {{ book.category.name|default:"General" }}</span>
                             </div>
-                        {% endif %}
-                        <span class="event-book-card__badge">{{ book.category.name|default:"Livre" }}</span>
-                    </a>
 
-                    <div class="event-book-card__body">
-                        <h2>{{ book.title }}</h2>
-                        <div class="event-book-meta">
-                            <span><i class="fas fa-user-pen"></i> {{ book.author }}</span>
-                            <span><i class="fas fa-calendar-days"></i> {{ book.publication_date|date:"Y" }}</span>
-                            <span><i class="fas fa-tag"></i> {{ book.category.name|default:"General" }}</span>
-                        </div>
-
-                        <div class="event-book-card__footer">
-                            <div>
-                                <small>Prix</small>
-                                <strong>{{ book.price }} DH</strong>
+                            <div class="event-book-card__footer">
+                                <div>
+                                    <small>Prix</small>
+                                    <strong>{{ book.price }} DH</strong>
+                                </div>
+                                <span class="event-stock {% if book.available_copies <= 0 %}is-out{% endif %}">
+                                    {{ book.available_copies }} dispo
+                                </span>
                             </div>
-                            <span class="event-stock {% if book.available_copies <= 0 %}is-out{% endif %}">
-                                {{ book.available_copies }} dispo
-                            </span>
-                        </div>
 
-                        <div class="event-book-actions">
-                            <a href="{% url 'catalog:book_detail' book.slug %}" class="event-detail-btn">
-                                <i class="fas fa-ticket"></i> Voir les details
-                            </a>
-                            <form method="post" action="{% url 'cart:add_to_cart' book.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="event-cart-btn" title="Ajouter au panier">
-                                    <i class="fas fa-cart-plus"></i>
-                                </button>
-                            </form>
+                            <div class="event-book-actions {% if user.is_staff %}event-book-actions--admin{% endif %}">
+                                <a href="{% url 'catalog:book_detail' book.slug %}" class="event-detail-btn">
+                                    <i class="fas fa-ticket"></i> Voir les details
+                                </a>
+                                {% if not user.is_staff %}
+                                    <form method="post" action="{% url 'cart:add_to_cart' book.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="event-cart-btn" title="Ajouter au panier">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
                         </div>
-                    </div>
-                </article>
-            {% endfor %}
-        </section>
-        {% include 'includes/pagination.html' %}
-    {% else %}
-        <section class="catalog-empty-state">
-            <i class="fas fa-book-open"></i>
-            <h2>Aucun livre trouve</h2>
-            <p>Essayez de changer la categorie, l'auteur ou le mot-cle recherche.</p>
-            <a href="{% url 'catalog:books_list' %}">Reinitialiser les filtres</a>
-        </section>
-    {% endif %}
+                    </article>
+                {% endfor %}
+            </section>
+            {% include 'includes/pagination.html' %}
+        {% else %}
+            <section class="catalog-empty-state">
+                <i class="fas fa-book-open"></i>
+                <h2>Aucun livre trouve</h2>
+                <p>Essayez de changer la categorie, l'auteur ou le mot-cle recherche.</p>
+                <a href="{% url 'catalog:books_list' %}">Reinitialiser les filtres</a>
+            </section>
+        {% endif %}
+    </div>
 </main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (() => {
+        const form = document.querySelector('[data-live-filter-form]');
+        if (!form) return;
+
+        const searchInput = form.querySelector('[data-live-search]');
+        const results = document.querySelector('[data-catalog-results]');
+        const count = form.querySelector('.catalog-tools__count');
+        let timer;
+        let controller;
+
+        const buildUrl = (url = window.location.pathname) => {
+            const params = new URLSearchParams(new FormData(form));
+
+            [...params.entries()].forEach(([key, value]) => {
+                if (!value) params.delete(key);
+            });
+
+            return `${url}${params.toString() ? `?${params}` : ''}`;
+        };
+
+        const updateResults = async (url = buildUrl()) => {
+            if (!results) return;
+
+            if (controller) controller.abort();
+            controller = new AbortController();
+            results.classList.add('is-loading');
+
+            try {
+                const response = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    signal: controller.signal,
+                });
+                if (!response.ok) throw new Error('Request failed');
+
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const nextResults = doc.querySelector('[data-catalog-results]');
+                const nextCount = doc.querySelector('.catalog-tools__count');
+
+                if (nextResults) results.innerHTML = nextResults.innerHTML;
+                if (count && nextCount) count.textContent = nextCount.textContent;
+
+                window.history.replaceState({}, '', url);
+            } catch (error) {
+                if (error.name !== 'AbortError') form.submit();
+            } finally {
+                results.classList.remove('is-loading');
+            }
+        };
+
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                window.clearTimeout(timer);
+                timer = window.setTimeout(() => updateResults(), 350);
+            });
+        }
+
+        form.querySelectorAll('select').forEach((select) => {
+            select.addEventListener('change', () => updateResults());
+        });
+
+        document.addEventListener('click', (event) => {
+            const link = event.target.closest('[data-catalog-results] .pagination a');
+            if (!link) return;
+
+            event.preventDefault();
+            updateResults(link.href);
+        });
+    })();
+</script>
 {% endblock %}

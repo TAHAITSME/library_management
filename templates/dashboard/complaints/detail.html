@@ -1,0 +1,259 @@
+{% extends 'dashboard/base.html' %}
+
+{% block dashboard_title %}Reclamation #{{ complaint.pk }}{% endblock %}
+{% block dashboard_actions %}
+<a class="btn btn-ghost" href="{% url 'dashboard:complaints' %}"><i class="fas fa-arrow-left"></i> Retour</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<style>
+  .complaint-detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .complaint-card {
+    border: 1px solid var(--dash-border);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(38 52 71 / 5%);
+    overflow: hidden;
+  }
+
+  .complaint-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px;
+    border-bottom: 1px solid var(--dash-border);
+    background: linear-gradient(180deg, #ffffff, #f8fbff);
+  }
+
+  .complaint-card__head h2 {
+    margin: 0;
+    color: var(--dash-text);
+    font-size: 1.2rem;
+  }
+
+  .complaint-card__head p {
+    margin: 6px 0 0;
+    color: var(--dash-muted);
+    font-size: .86rem;
+  }
+
+  .complaint-status {
+    flex: 0 0 auto;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding-inline: 12px;
+    border-radius: 999px;
+    background: #eef5ff;
+    color: var(--dash-blue-dark);
+    font-weight: 900;
+    font-size: .78rem;
+  }
+
+  .complaint-card__body {
+    display: grid;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .complaint-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .complaint-info {
+    min-height: 76px;
+    display: grid;
+    align-content: center;
+    gap: 6px;
+    padding: 14px;
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    background: #f8fafc;
+  }
+
+  .complaint-info span,
+  .complaint-message span {
+    color: var(--dash-muted);
+    font-size: .72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .complaint-info strong {
+    color: var(--dash-text);
+    font-size: .96rem;
+    overflow-wrap: anywhere;
+  }
+
+  .complaint-message {
+    display: grid;
+    gap: 10px;
+  }
+
+  .complaint-message__box {
+    min-height: 140px;
+    padding: 16px;
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--dash-text);
+    line-height: 1.65;
+    white-space: pre-line;
+  }
+
+  .complaint-message__box.is-admin {
+    background: #f3fbf9;
+    border-color: rgb(34 199 169 / 28%);
+  }
+
+  .complaint-form-card {
+    padding: 20px;
+  }
+
+  .complaint-form-card h2 {
+    margin: 0 0 4px;
+    color: var(--dash-text);
+    font-size: 1.1rem;
+  }
+
+  .complaint-form-card > p {
+    margin: 0 0 18px;
+    color: var(--dash-muted);
+    font-size: .86rem;
+  }
+
+  .complaint-form {
+    display: grid;
+    gap: 16px;
+  }
+
+  .complaint-field {
+    display: grid;
+    gap: 7px;
+  }
+
+  .complaint-field label {
+    color: var(--dash-text);
+    font-weight: 900;
+    font-size: .84rem;
+  }
+
+  .complaint-field select,
+  .complaint-field textarea {
+    width: 100%;
+    border: 1px solid var(--dash-border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--dash-text);
+    box-shadow: none;
+  }
+
+  .complaint-field select {
+    min-height: 44px;
+  }
+
+  .complaint-field textarea {
+    min-height: 160px;
+    padding: 12px;
+    resize: vertical;
+  }
+
+  .complaint-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+  }
+
+  @media (max-width: 980px) {
+    .complaint-detail-layout,
+    .complaint-info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="complaint-detail-layout">
+    <section class="complaint-card">
+        <div class="complaint-card__head">
+            <div>
+                <h2>{{ complaint.subject }}</h2>
+                <p>Envoyee par {{ complaint.user.username }} le {{ complaint.created_at|date:"d/m/Y H:i" }}</p>
+            </div>
+            <span class="complaint-status">{{ complaint.get_status_display }}</span>
+        </div>
+
+        <div class="complaint-card__body">
+            <div class="complaint-info-grid">
+                <div class="complaint-info">
+                    <span>Utilisateur</span>
+                    <strong>{{ complaint.user.get_full_name|default:complaint.user.username }}</strong>
+                </div>
+                <div class="complaint-info">
+                    <span>Email</span>
+                    <strong>{{ complaint.user.email|default:"-" }}</strong>
+                </div>
+                <div class="complaint-info">
+                    <span>Categorie</span>
+                    <strong>{{ complaint.get_category_display }}</strong>
+                </div>
+                <div class="complaint-info">
+                    <span>Priorite</span>
+                    <strong>{{ complaint.get_priority_display }}</strong>
+                </div>
+                <div class="complaint-info">
+                    <span>Derniere mise a jour</span>
+                    <strong>{{ complaint.updated_at|date:"d/m/Y H:i" }}</strong>
+                </div>
+                <div class="complaint-info">
+                    <span>Resolution</span>
+                    <strong>{% if complaint.resolved_at %}{{ complaint.resolved_at|date:"d/m/Y H:i" }}{% else %}Non resolue{% endif %}</strong>
+                </div>
+            </div>
+
+            <div class="complaint-message">
+                <span>Message utilisateur</span>
+                <div class="complaint-message__box">{{ complaint.message }}</div>
+            </div>
+
+            {% if complaint.admin_response %}
+                <div class="complaint-message">
+                    <span>Reponse admin</span>
+                    <div class="complaint-message__box is-admin">{{ complaint.admin_response }}</div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="complaint-card complaint-form-card">
+        <h2>Traitement admin</h2>
+        <p>Mettez a jour le statut et ajoutez une reponse claire pour le client.</p>
+
+        <form method="post" class="complaint-form">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="complaint-field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <small style="color: var(--dash-red);">{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <div class="complaint-actions">
+                <button class="btn btn-primary" type="submit"><i class="fas fa-save"></i> Enregistrer</button>
+                <a class="btn btn-ghost" href="{% url 'dashboard:complaints' %}">Annuler</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

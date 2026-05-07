@@ -1,11 +1,12 @@
 import logging
 import uuid
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
+from django.db import models, transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
@@ -15,6 +16,7 @@ from apps.cart.models import Cart
 from apps.catalog.models import Book
 
 from .models import Order, OrderItem, Payment
+from .pdf import build_order_pdf
 from .stripe_services import (
     confirm_checkout_session,
     create_checkout_session,
@@ -24,6 +26,32 @@ from .stripe_services import (
 )
 
 logger = logging.getLogger(__name__)
+FIXED_SHIPPING_COST = Decimal('10.00')
+
+
+def _money(value):
+    return Decimal(value).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+
+def calculate_order_pricing(user, subtotal):
+    paid_books = (
+        OrderItem.objects.filter(order__user=user, order__payment_status='paid')
+        .aggregate(total=models.Sum('quantity'))['total'] or 0
+    )
+    discount_percentage = Decimal('20.00') if paid_books and paid_books % 5 == 0 else Decimal('0.00')
+    discount = _money((subtotal * discount_percentage) / Decimal('100'))
+    discount = min(discount, subtotal)
+    shipping_cost = FIXED_SHIPPING_COST
+    tax = Decimal('0.00')
+    total = _money(subtotal + shipping_cost - discount)
+    return {
+        'subtotal': _money(subtotal),
+        'shipping_cost': shipping_cost,
+        'tax': tax,
+        'discount': discount,
+        'discount_percentage': discount_percentage,
+        'total': total,
+    }
 
 
 @staff_member_required
@@ -55,6 +83,19 @@ def order_detail_view(request, order_id):
 
 
 @login_required
+def order_pdf_view(request, order_id):
+    order = get_object_or_404(
+        Order.objects.select_related('user').prefetch_related('items__book', 'items__book__author'),
+        id=order_id,
+        user=request.user,
+    )
+    pdf = build_order_pdf(order)
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="commande-{order.order_number}.pdf"'
+    return response
+
+
+@login_required
 @require_http_methods(["GET", "POST"])
 def create_order_view(request):
     cart = get_object_or_404(Cart, user=request.user)
@@ -66,11 +107,13 @@ def create_order_view(request):
 
     if request.method == 'POST':
         shipping_address = request.POST.get('shipping_address', '').strip()
+        subtotal = sum(item.get_total() for item in cart_items)
+        pricing = calculate_order_pricing(request.user, subtotal)
         if not shipping_address:
             messages.error(request, "L'adresse de livraison est requise.")
             return render(request, 'orders/create_order.html', {
                 'cart_items': cart_items,
-                'total': cart.get_total(),
+                **pricing,
             })
 
         try:
@@ -84,17 +127,17 @@ def create_order_view(request):
                         )
                         return render(request, 'orders/create_order.html', {
                             'cart_items': cart_items,
-                            'total': cart.get_total(),
+                            **pricing,
                         })
 
-                subtotal = sum(item.get_total() for item in cart_items)
                 order = Order.objects.create(
                     user=request.user,
                     order_number=f"ORD-{uuid.uuid4().hex[:8].upper()}",
-                    subtotal=subtotal,
-                    shipping_cost=0,
-                    tax=0,
-                    total=subtotal,
+                    subtotal=pricing['subtotal'],
+                    shipping_cost=pricing['shipping_cost'],
+                    tax=pricing['tax'],
+                    discount=pricing['discount'],
+                    total=pricing['total'],
                     shipping_address=shipping_address,
                     status='pending',
                     payment_status='pending',
@@ -117,9 +160,11 @@ def create_order_view(request):
             logger.exception('Erreur creation commande pour user %s', request.user.id)
             messages.error(request, f'Erreur lors de la creation de la commande: {exc}')
 
+    subtotal = sum(item.get_total() for item in cart_items)
+    pricing = calculate_order_pricing(request.user, subtotal)
     return render(request, 'orders/create_order.html', {
         'cart_items': cart_items,
-        'total': cart.get_total(),
+        **pricing,
     })
 
 

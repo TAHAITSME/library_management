@@ -7,6 +7,7 @@ urlpatterns = [
     path('', views.orders_list_view, name='orders_list'),
     path('create/', views.create_order_view, name='create_order'),
     path('<int:order_id>/', views.order_detail_view, name='order_detail'),
+    path('<int:order_id>/pdf/', views.order_pdf_view, name='order_pdf'),
     path('<int:order_id>/payment/', views.order_payment_view, name='order_payment'),
     path('<int:order_id>/stripe/checkout/', views.create_stripe_checkout_session_view, name='stripe_checkout'),
     path('<int:order_id>/stripe/success/', views.stripe_success_view, name='stripe_success'),

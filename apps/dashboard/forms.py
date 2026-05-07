@@ -16,6 +16,14 @@ class DashboardModelForm(forms.ModelForm):
             field.widget.attrs['class'] = f'{css} dashboard-input'.strip()
 
 
+class CoverImageInput(forms.ClearableFileInput):
+    def is_initial(self, value):
+        return False
+
+    def format_value(self, value):
+        return None
+
+
 class BookForm(DashboardModelForm):
     class Meta:
         model = Book
@@ -27,7 +35,7 @@ class BookForm(DashboardModelForm):
         widgets = {
             'publication_date': forms.DateInput(attrs={'type': 'date'}),
             'description': forms.Textarea(attrs={'rows': 5}),
-            'cover_image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'cover_image': CoverImageInput(attrs={'accept': 'image/*'}),
         }
 
     def clean_slug(self):

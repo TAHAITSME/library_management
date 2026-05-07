@@ -7,20 +7,30 @@
     <div class="invoice-head">
         <div>
             <h2>BiblioNUM</h2>
-            <p>Facture liee a la commande {{ invoice.order.order_number }}</p>
+            <p>Facture liee a la commande <a href="{% url 'dashboard:order_detail' invoice.order.pk %}">{{ invoice.order.order_number }}</a></p>
         </div>
         <strong>{{ invoice.created_at|date:"d/m/Y" }}</strong>
     </div>
+
     <dl class="detail-list">
-        <dt>Client</dt><dd>{{ invoice.order.user }}</dd>
-        <dt>Adresse</dt><dd>{{ invoice.billing_address|linebreaksbr }}</dd>
+        <dt>Client</dt><dd><a href="{% url 'dashboard:user_detail' invoice.order.user.pk %}">{{ invoice.order.user }}</a></dd>
+        <dt>Adresse de facturation</dt><dd>{{ invoice.billing_address|linebreaksbr }}</dd>
+        <dt>Total commande</dt><dd><strong>{{ invoice.order.total }} DH</strong></dd>
     </dl>
+
     <div class="table-wrap">
         <table class="dashboard-table">
             <thead><tr><th>Livre</th><th>Quantite</th><th>Prix</th><th>Total</th></tr></thead>
             <tbody>
             {% for item in invoice.order.items.all %}
-                <tr><td>{{ item.book.title }}</td><td>{{ item.quantity }}</td><td>{{ item.price }} DH</td><td>{{ item.get_total }} DH</td></tr>
+                <tr>
+                    <td><strong>{{ item.book.title }}</strong></td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.price }} DH</td>
+                    <td><strong>{{ item.get_total }} DH</strong></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">Aucune ligne.</td></tr>
             {% endfor %}
             </tbody>
         </table>

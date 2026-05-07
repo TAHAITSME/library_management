@@ -30,7 +30,8 @@ class HomeView(TemplateView):
 
         featured_books = list(
             Book.objects.select_related("author", "category")
-            .order_by("-rating", "-created_at")[:3]
+            .filter(status="available")
+            .order_by("-rating", "-created_at")[:6]
         )
 
         context.update(

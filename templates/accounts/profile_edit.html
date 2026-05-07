@@ -123,6 +123,57 @@
     box-shadow: var(--app-focus);
   }
 
+  .profile-photo-upload {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+    padding: 16px;
+    border: 1px dashed var(--app-border-strong);
+    border-radius: 16px;
+    background: var(--app-surface-soft);
+  }
+
+  .profile-photo-preview {
+    width: 96px;
+    height: 96px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+    font-size: 2rem;
+    font-weight: 900;
+  }
+
+  .profile-photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .profile-photo-copy {
+    display: grid;
+    gap: 8px;
+  }
+
+  .profile-photo-copy strong {
+    color: var(--app-text);
+  }
+
+  .profile-photo-copy span {
+    color: var(--app-muted);
+    font-size: .9rem;
+  }
+
+  .profile-photo-copy input[type="file"] {
+    min-height: auto;
+    padding: 10px;
+    cursor: pointer;
+  }
+
   .profile-edit-actions {
     display: flex;
     justify-content: space-between;
@@ -187,6 +238,12 @@
     .profile-edit-actions .btn {
       width: 100%;
     }
+
+    .profile-photo-upload {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      text-align: center;
+    }
   }
 </style>
 {% endblock %}
@@ -201,7 +258,7 @@
         </div>
         <span class="profile-edit-avatar">
             {% if request.user.avatar %}
-                <img src="{{ request.user.avatar }}" alt="{{ request.user.get_full_name|default:request.user.username }}">
+                <img src="{{ request.user.avatar.url }}" alt="{{ request.user.get_full_name|default:request.user.username }}">
             {% else %}
                 <i class="fas fa-user"></i>
             {% endif %}
@@ -210,7 +267,7 @@
 
     <div class="profile-edit-layout">
         <section class="profile-edit-card">
-            <form method="post" class="profile-edit-form" novalidate>
+            <form method="post" enctype="multipart/form-data" class="profile-edit-form" novalidate>
                 {% csrf_token %}
                 <div class="profile-edit-grid">
                     <div class="profile-edit-field">
@@ -251,7 +308,20 @@
 
                     <div class="profile-edit-field profile-edit-field--full">
                         <label for="{{ form.avatar.id_for_label }}">{{ form.avatar.label }}</label>
-                        {{ form.avatar }}
+                        <div class="profile-photo-upload">
+                            <div class="profile-photo-preview" data-avatar-preview>
+                                {% if request.user.avatar %}
+                                    <img src="{{ request.user.avatar.url }}" alt="{{ request.user.get_full_name|default:request.user.username }}">
+                                {% else %}
+                                    <span>{{ request.user.first_name|default:request.user.username|first|upper }}{{ request.user.last_name|first|upper }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="profile-photo-copy">
+                                <strong>Choisir une photo depuis vos fichiers</strong>
+                                <span data-avatar-file-name>Formats acceptes : JPG, PNG, WEBP.</span>
+                                {{ form.avatar }}
+                            </div>
+                        </div>
                         {% for error in form.avatar.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
                     </div>
                 </div>
@@ -275,9 +345,33 @@
             <ul class="profile-help-list">
                 <li><i class="fas fa-id-card"></i><span>Votre nom, email et telephone.</span></li>
                 <li><i class="fas fa-location-dot"></i><span>L'adresse utilisee pour les commandes.</span></li>
-                <li><i class="fas fa-image"></i><span>Une URL d'avatar pour personnaliser le profil.</span></li>
+                <li><i class="fas fa-image"></i><span>Une photo depuis vos fichiers pour personnaliser le profil.</span></li>
             </ul>
         </aside>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (() => {
+        const input = document.querySelector('#id_avatar');
+        const preview = document.querySelector('[data-avatar-preview]');
+        const fileName = document.querySelector('[data-avatar-file-name]');
+        if (!input || !preview) return;
+
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            if (fileName) fileName.textContent = file.name;
+
+            const reader = new FileReader();
+            reader.addEventListener('load', () => {
+                preview.innerHTML = `<img src="${reader.result}" alt="Apercu de la photo">`;
+            });
+            reader.readAsDataURL(file);
+        });
+    })();
+</script>
 {% endblock %}

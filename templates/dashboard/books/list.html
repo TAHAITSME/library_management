@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block dashboard_content %}
-<section class="dashboard-panel">
+<section class="dashboard-panel dashboard-panel--books">
     <form class="dashboard-filters" method="get">
         <input class="dashboard-input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Titre ou ISBN">
         <select class="dashboard-input" name="category">
@@ -18,12 +18,12 @@
         <button class="btn btn-ghost" type="submit"><i class="fas fa-filter"></i> Filtrer</button>
     </form>
     <div class="table-wrap">
-        <table class="dashboard-table">
+        <table class="dashboard-table dashboard-table--books">
             <thead><tr><th>Livre</th><th>Categorie</th><th>Prix</th><th>Stock</th><th>Statut</th><th></th></tr></thead>
             <tbody>
             {% for book in books %}
                 <tr>
-                    <td>
+                    <td data-label="Livre">
                         <div class="dashboard-book-cell">
                             {% if book.get_cover_image_url %}
                                 <img src="{{ book.get_cover_image_url }}" alt="{{ book.title }}">
@@ -36,11 +36,11 @@
                             </div>
                         </div>
                     </td>
-                    <td>{{ book.category|default:"-" }}</td>
-                    <td>{{ book.price }} DH</td>
-                    <td>{{ book.available_copies }}/{{ book.total_copies }}</td>
-                    <td><span class="badge badge-{{ book.status }}">{{ book.get_status_display }}</span></td>
-                    <td class="row-actions">
+                    <td data-label="Categorie">{{ book.category|default:"-" }}</td>
+                    <td data-label="Prix">{{ book.price }} DH</td>
+                    <td data-label="Stock">{{ book.available_copies }}/{{ book.total_copies }}</td>
+                    <td data-label="Statut"><span class="badge badge-{{ book.status }}">{{ book.get_status_display }}</span></td>
+                    <td class="row-actions" data-label="Actions">
                         <a href="{% url 'dashboard:book_edit' book.pk %}"><i class="fas fa-pen"></i></a>
                         <a href="{% url 'dashboard:book_delete' book.pk %}"><i class="fas fa-trash"></i></a>
                     </td>

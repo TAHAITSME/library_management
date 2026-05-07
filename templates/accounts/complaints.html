@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Reclamations | BiblioNUM{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Support</p>
+        <h1>Envoyer une reclamation</h1>
+        <p>Signalez un probleme a l'administration. Vous pouvez suivre l'etat de vos derniers messages ici.</p>
+    </div>
+</header>
+
+<div class="split-layout">
+    <section class="form-card">
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            <div class="form-field">
+                <label for="{{ form.subject.id_for_label }}">{{ form.subject.label }}</label>
+                {{ form.subject }}
+                {% for error in form.subject.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+                    {{ form.category }}
+                </div>
+                <div class="form-field">
+                    <label for="{{ form.priority.id_for_label }}">{{ form.priority.label }}</label>
+                    {{ form.priority }}
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+                {{ form.message }}
+                {% for error in form.message.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i> Envoyer</button>
+                <a class="btn btn-ghost" href="{% url 'accounts:account' %}">Retour</a>
+            </div>
+        </form>
+    </section>
+
+    <aside class="summary-panel">
+        <h2>Mes dernieres reclamations</h2>
+        {% for complaint in complaints %}
+            <div class="summary-row" style="align-items:flex-start;">
+                <span>
+                    <strong>{{ complaint.subject }}</strong><br>
+                    <small>{{ complaint.created_at|date:"d/m/Y H:i" }}</small>
+                    {% if complaint.admin_response %}
+                        <br><small>Reponse: {{ complaint.admin_response|truncatechars:80 }}</small>
+                    {% endif %}
+                </span>
+                <span class="badge badge-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
+            </div>
+        {% empty %}
+            <p class="empty-state">Aucune reclamation envoyee.</p>
+        {% endfor %}
+    </aside>
+</div>
+{% endblock %}

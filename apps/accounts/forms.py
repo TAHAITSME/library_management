@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, AuthenticationForm
-from .models import CustomUser, Profile
+from .models import Complaint, CustomUser, Profile
 
 
 class CustomAuthenticationForm(AuthenticationForm):
@@ -76,7 +76,7 @@ class ProfileForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'input'}),
             'address': forms.Textarea(attrs={'class': 'textarea', 'rows': 3}),
             'bio': forms.Textarea(attrs={'class': 'textarea', 'rows': 3}),
-            'avatar': forms.URLInput(attrs={'class': 'input'}),
+            'avatar': forms.FileInput(attrs={'class': 'input', 'accept': 'image/*'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -87,7 +87,7 @@ class ProfileForm(forms.ModelForm):
         self.fields['phone'].label = 'Telephone'
         self.fields['address'].label = 'Adresse'
         self.fields['bio'].label = 'Bio'
-        self.fields['avatar'].label = 'URL avatar'
+        self.fields['avatar'].label = 'Photo de profil'
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
@@ -100,3 +100,48 @@ class ProfileForm(forms.ModelForm):
         if queryset.exists():
             raise forms.ValidationError('Cet email est deja utilise.')
         return email
+
+
+class ComplaintForm(forms.ModelForm):
+    class Meta:
+        model = Complaint
+        fields = ('subject', 'category', 'priority', 'message')
+        widgets = {
+            'subject': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Ex: Probleme avec ma commande',
+            }),
+            'category': forms.Select(attrs={'class': 'select'}),
+            'priority': forms.Select(attrs={'class': 'select'}),
+            'message': forms.Textarea(attrs={
+                'class': 'textarea',
+                'rows': 6,
+                'placeholder': 'Expliquez clairement le probleme rencontre...',
+            }),
+        }
+        labels = {
+            'subject': 'Sujet',
+            'category': 'Categorie',
+            'priority': 'Priorite',
+            'message': 'Message',
+        }
+
+
+class ComplaintAdminForm(forms.ModelForm):
+    class Meta:
+        model = Complaint
+        fields = ('status', 'priority', 'admin_response')
+        widgets = {
+            'status': forms.Select(attrs={'class': 'dashboard-input'}),
+            'priority': forms.Select(attrs={'class': 'dashboard-input'}),
+            'admin_response': forms.Textarea(attrs={
+                'class': 'dashboard-input',
+                'rows': 5,
+                'placeholder': 'Reponse ou note interne pour cette reclamation...',
+            }),
+        }
+        labels = {
+            'status': 'Statut',
+            'priority': 'Priorite',
+            'admin_response': 'Reponse admin',
+        }

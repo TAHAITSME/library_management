@@ -180,85 +180,157 @@
     overflow: hidden;
     display: grid;
     align-items: center;
-    padding: clamp(48px, 7vw, 92px);
+    padding: clamp(42px, 6vw, 82px);
     background:
-      radial-gradient(circle at 76% 18%, rgb(96 165 250 / 30%), transparent 30%),
-      radial-gradient(circle at 18% 82%, rgb(245 158 11 / 12%), transparent 34%),
-      linear-gradient(135deg, #0f172a, #1e3a8a 58%, #2647b8);
+      linear-gradient(135deg, rgb(15 23 42 / 92%), rgb(26 46 74 / 88)),
+      url("https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1400&q=82") center / cover;
     color: #ffffff;
   }
 
-  .login-right::before,
-  .login-right::after {
+  .login-right::before {
     content: "";
     position: absolute;
-    border: 1px solid rgb(255 255 255 / 18%);
-    border-radius: 999px;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgb(15 23 42 / 32%), rgb(30 64 175 / 18%)),
+      repeating-linear-gradient(90deg, rgb(255 255 255 / 4%) 0 1px, transparent 1px 120px);
     pointer-events: none;
-  }
-
-  .login-right::before {
-    width: 420px;
-    height: 420px;
-    right: -180px;
-    bottom: -150px;
-  }
-
-  .login-right::after {
-    width: 220px;
-    height: 220px;
-    right: 18%;
-    top: 12%;
   }
 
   .login-right__content {
     position: relative;
     z-index: 1;
-    max-width: 660px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: clamp(28px, 4vw, 54px);
+    align-items: center;
+    max-width: 900px;
   }
 
   .login-right .eyebrow {
-    color: #f4bf63;
+    color: #f2b85b;
   }
 
   .login-right h2 {
     margin: 0;
     color: #ffffff;
-    font-size: clamp(3rem, 6vw, 6.1rem);
-    line-height: .95;
+    font-size: clamp(2.6rem, 4.6vw, 5rem);
+    line-height: 1;
     letter-spacing: 0;
   }
 
   .login-right p {
-    max-width: 560px;
+    max-width: 520px;
     margin: 20px 0 0;
-    color: rgb(255 255 255 / 82%);
+    color: rgb(255 255 255 / 78%);
     font-size: 1.05rem;
     line-height: 1.7;
   }
 
-  .login-right__stats {
+  .login-right__features {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
-    margin-top: 34px;
+    margin-top: 30px;
   }
 
-  .login-right__stats span {
-    min-height: 86px;
-    padding: 16px;
-    border: 1px solid rgb(255 255 255 / 20%);
+  .login-feature {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 13px 14px;
+    border: 1px solid rgb(255 255 255 / 16%);
+    border-radius: 16px;
+    background: rgb(255 255 255 / 9%);
+    backdrop-filter: blur(14px);
+  }
+
+  .login-feature i {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 14px;
-    background: rgb(255 255 255 / 10%);
-    color: rgb(255 255 255 / 82%);
-    backdrop-filter: blur(16px);
+    background: rgb(242 184 91 / 18%);
+    color: #f2b85b;
   }
 
-  .login-right__stats strong {
+  .login-feature strong {
     display: block;
-    margin-bottom: 6px;
     color: #ffffff;
-    font-size: 1.22rem;
+    font-size: .98rem;
+  }
+
+  .login-feature span {
+    color: rgb(255 255 255 / 70%);
+    font-size: .9rem;
+  }
+
+  .login-showcase {
+    display: grid;
+    gap: 14px;
+  }
+
+  .login-book-card {
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 18%);
+    border-radius: 24px;
+    background: rgb(255 255 255 / 12%);
+    box-shadow: 0 26px 70px rgb(0 0 0 / 26%);
+    backdrop-filter: blur(18px);
+  }
+
+  .login-book-card img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    display: block;
+    object-fit: cover;
+  }
+
+  .login-book-card__body {
+    padding: 18px;
+  }
+
+  .login-book-card__body span {
+    color: #f2b85b;
+    font-size: .78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .login-book-card__body strong {
+    display: block;
+    margin-top: 6px;
+    color: #ffffff;
+    font-size: 1.25rem;
+  }
+
+  .login-book-card__body p {
+    margin-top: 8px;
+    font-size: .92rem;
+    line-height: 1.5;
+  }
+
+  .login-mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .login-mini-stats span {
+    padding: 12px 10px;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 12%);
+    color: rgb(255 255 255 / 72%);
+    font-size: .82rem;
+    text-align: center;
+  }
+
+  .login-mini-stats strong {
+    display: block;
+    color: #ffffff;
+    font-size: 1rem;
   }
 
   @media (max-width: 768px) {
@@ -288,8 +360,12 @@
       font-size: clamp(2.4rem, 12vw, 4rem);
     }
 
-    .login-right__stats {
+    .login-right__content {
       grid-template-columns: 1fr;
+    }
+
+    .login-showcase {
+      max-width: 360px;
     }
   }
 </style>
@@ -346,13 +422,40 @@
 
     <aside class="login-right">
         <div class="login-right__content">
-            <p class="eyebrow">Bibliotheque connectee</p>
-            <h2>Lire, acheter, reserver et suivre vos livres.</h2>
-            <p>Connectez-vous pour reprendre vos commandes, vos emprunts et vos reservations sans perdre de temps.</p>
-            <div class="login-right__stats">
-                <span><strong>24/7</strong> Catalogue accessible</span>
-                <span><strong>Suivi</strong> Commandes et emprunts</span>
-                <span><strong>PDF</strong> Factures disponibles</span>
+            <div>
+                <p class="eyebrow">Bibliotheque connectee</p>
+                <h2>Votre bibliotheque, toujours a portee.</h2>
+                <p>Connectez-vous pour reprendre vos lectures, suivre vos commandes et gerer vos reservations depuis un espace clair.</p>
+                <div class="login-right__features">
+                    <div class="login-feature">
+                        <i class="fas fa-book-open-reader"></i>
+                        <div><strong>Catalogue disponible</strong><span>Explorez les livres et leurs disponibilites.</span></div>
+                    </div>
+                    <div class="login-feature">
+                        <i class="fas fa-hand-holding-heart"></i>
+                        <div><strong>Suivi centralise</strong><span>Commandes, emprunts et reservations au meme endroit.</span></div>
+                    </div>
+                    <div class="login-feature">
+                        <i class="fas fa-file-invoice"></i>
+                        <div><strong>Historique conserve</strong><span>Retrouvez vos factures et vos anciennes activites.</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="login-showcase" aria-hidden="true">
+                <article class="login-book-card">
+                    <img src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&w=700&q=82" alt="">
+                    <div class="login-book-card__body">
+                        <span>Espace lecteur</span>
+                        <strong>Reprenez la lecture sans perdre le fil.</strong>
+                        <p>Vos livres, vos demandes et votre historique restent synchronises.</p>
+                    </div>
+                </article>
+                <div class="login-mini-stats">
+                    <span><strong>24/7</strong> Acces</span>
+                    <span><strong>PDF</strong> Factures</span>
+                    <span><strong>Live</strong> Stock</span>
+                </div>
             </div>
         </div>
     </aside>

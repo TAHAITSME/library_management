@@ -47,8 +47,11 @@
         <aside class="summary-panel">
             <h2>Resume</h2>
             <div class="summary-row"><span>Articles</span><strong>{{ item_count }}</strong></div>
-            <div class="summary-row"><span>Sous-total</span><strong>{{ total }} DH</strong></div>
-            <div class="summary-row"><span>Livraison</span><strong>Gratuite</strong></div>
+            <div class="summary-row"><span>Sous-total</span><strong>{{ subtotal }} DH</strong></div>
+            <div class="summary-row"><span>Livraison</span><strong>{{ shipping_cost }} DH</strong></div>
+            {% if discount %}
+                <div class="summary-row"><span>Remise fidelite ({{ discount_percentage }}%)</span><strong>-{{ discount }} DH</strong></div>
+            {% endif %}
             <div class="summary-row summary-total"><span>Total</span><strong>{{ total }} DH</strong></div>
             <div class="action-stack" style="margin-top: 16px;">
                 <a href="{% url 'orders:create_order' %}" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Continuer vers la commande</a>

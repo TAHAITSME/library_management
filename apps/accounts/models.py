@@ -14,7 +14,7 @@ class CustomUser(AbstractUser):
     ]
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
-    avatar = models.URLField(null=True, blank=True, help_text='URL de l\'avatar')
+    avatar = models.ImageField(upload_to='accounts/avatars/', null=True, blank=True, help_text='Photo de profil')
     bio = models.TextField(blank=True)
     phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
@@ -50,3 +50,48 @@ class Profile(models.Model):
     
     def __str__(self):
         return f"Profil de {self.user.get_full_name()}"
+
+
+class Complaint(models.Model):
+    """Reclamation envoyee par un utilisateur a l'administration."""
+
+    CATEGORY_CHOICES = [
+        ('order', 'Commande'),
+        ('payment', 'Paiement'),
+        ('borrow', 'Emprunt'),
+        ('reservation', 'Reservation'),
+        ('account', 'Compte'),
+        ('other', 'Autre'),
+    ]
+
+    STATUS_CHOICES = [
+        ('new', 'Nouvelle'),
+        ('in_progress', 'En cours'),
+        ('resolved', 'Resolue'),
+        ('closed', 'Fermee'),
+    ]
+
+    PRIORITY_CHOICES = [
+        ('low', 'Faible'),
+        ('normal', 'Normale'),
+        ('high', 'Haute'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='complaints')
+    subject = models.CharField(max_length=180)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal')
+    message = models.TextField()
+    admin_response = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Reclamation'
+        verbose_name_plural = 'Reclamations'
+
+    def __str__(self):
+        return f"{self.subject} - {self.user}"

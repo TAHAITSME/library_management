@@ -343,6 +343,9 @@
                         {% if order.payment_status != 'paid' and order.status != 'cancelled' %}
                             <a href="{% url 'orders:order_payment' order.id %}" class="btn btn-primary btn-sm">Payer</a>
                         {% endif %}
+                        <a href="{% url 'orders:order_pdf' order.id %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
                         <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost btn-sm">Details</a>
                     </div>
                 </article>
@@ -385,6 +388,9 @@
                         </div>
 
                         <div class="order-card__actions">
+                            <a href="{% url 'orders:order_pdf' order.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </a>
                             <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost btn-sm">Details</a>
                         </div>
                     </article>

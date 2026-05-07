@@ -24,6 +24,7 @@
             <a class="{% if dashboard_section == 'invoices' %}is-active{% endif %}" href="{% url 'dashboard:invoices' %}"><i class="fas fa-file-invoice"></i> Factures</a>
             <a class="{% if dashboard_section == 'borrows' %}is-active{% endif %}" href="{% url 'dashboard:borrows' %}"><i class="fas fa-hand-holding-heart"></i> Emprunts</a>
             <a class="{% if dashboard_section == 'reservations' %}is-active{% endif %}" href="{% url 'dashboard:reservations' %}"><i class="fas fa-bookmark"></i> Reservations</a>
+            <a class="{% if dashboard_section == 'complaints' %}is-active{% endif %}" href="{% url 'dashboard:complaints' %}"><i class="fas fa-comments"></i> Reclamations</a>
             <a class="{% if dashboard_section == 'users' %}is-active{% endif %}" href="{% url 'dashboard:users' %}"><i class="fas fa-users"></i> Utilisateurs</a>
             <a class="{% if dashboard_section == 'categories' %}is-active{% endif %}" href="{% url 'dashboard:categories' %}"><i class="fas fa-tags"></i> Categories</a>
             <a class="{% if dashboard_section == 'authors' %}is-active{% endif %}" href="{% url 'dashboard:authors' %}"><i class="fas fa-pen-nib"></i> Auteurs</a>

@@ -78,6 +78,9 @@ def borrow_detail_view(request, borrow_id):
 def borrow_request_legacy_view(request, book_id):
     """Demander un emprunt"""
     book = get_object_or_404(Book, id=book_id)
+    if request.user.is_staff:
+        messages.warning(request, "Les comptes administrateur ne peuvent pas demander un emprunt.")
+        return redirect('catalog:book_detail', slug=book.slug)
     
     # Vérifier si une demande existe déjà
     existing_request = BorrowRequest.objects.filter(user=request.user, book=book, status='pending').exists()

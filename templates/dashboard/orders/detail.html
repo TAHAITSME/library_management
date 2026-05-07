@@ -14,21 +14,37 @@
 {% block dashboard_content %}
 <div class="dashboard-grid dashboard-grid-2">
     <section class="dashboard-panel">
-        <h2>Informations</h2>
+        <div class="panel-head">
+            <div>
+                <h2>Informations commande</h2>
+                <p>{{ order.created_at|date:"d/m/Y H:i" }}</p>
+            </div>
+            <span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span>
+        </div>
         <dl class="detail-list">
-            <dt>Client</dt><dd>{{ order.user }}</dd>
-            <dt>Date</dt><dd>{{ order.created_at|date:"d/m/Y H:i" }}</dd>
-            <dt>Statut</dt><dd><span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span></dd>
+            <dt>Client</dt><dd><a href="{% url 'dashboard:user_detail' order.user.pk %}">{{ order.user }}</a></dd>
             <dt>Paiement</dt><dd><span class="badge badge-{{ order.payment_status }}">{{ order.get_payment_status_display }}</span></dd>
-            <dt>Total</dt><dd>{{ order.total }} DH</dd>
+            <dt>Sous-total</dt><dd>{{ order.subtotal }} DH</dd>
+            <dt>Livraison</dt><dd>{{ order.shipping_cost }} DH</dd>
+            <dt>Remise</dt><dd>{{ order.discount }} DH</dd>
+            <dt>Total</dt><dd><strong>{{ order.total }} DH</strong></dd>
             <dt>Adresse</dt><dd>{{ order.shipping_address|linebreaksbr }}</dd>
         </dl>
     </section>
+
     <section class="dashboard-panel">
-        <h2>Lignes de commande</h2>
+        <div class="panel-head">
+            <div>
+                <h2>Lignes de commande</h2>
+                <p>{{ order.items.count }} article(s)</p>
+            </div>
+        </div>
         {% for item in order.items.all %}
             <div class="activity-row">
-                <span>{{ item.book.title }}<small>{{ item.quantity }} x {{ item.price }} DH</small></span>
+                <span>
+                    <strong>{{ item.book.title }}</strong>
+                    <small>{{ item.quantity }} x {{ item.price }} DH</small>
+                </span>
                 <strong>{{ item.get_total }} DH</strong>
             </div>
         {% empty %}

@@ -2,6 +2,175 @@
 
 {% block title %}Finaliser la commande | BiblioNUM{% endblock %}
 
+{% block extra_css %}
+<style>
+  .checkout-form-card {
+    display: grid;
+    gap: 16px;
+  }
+
+  .checkout-location {
+    display: grid;
+    grid-template-columns: minmax(240px, .68fr) minmax(0, 1.32fr);
+    gap: 18px;
+    align-items: stretch;
+    padding: 16px;
+    border: 1px solid var(--app-border);
+    border-radius: 18px;
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .checkout-location__info {
+    display: grid;
+    align-content: space-between;
+    gap: 16px;
+    padding: 4px 2px;
+  }
+
+  .checkout-location__header {
+    display: grid;
+    gap: 6px;
+  }
+
+  .checkout-location__header span {
+    color: var(--app-muted);
+    font-size: .76rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .checkout-location__header strong {
+    color: var(--app-text);
+    font-size: 1.2rem;
+    line-height: 1.25;
+  }
+
+  .checkout-location__copy {
+    margin: 0;
+    color: var(--app-muted);
+    font-size: .92rem;
+    line-height: 1.6;
+  }
+
+  .checkout-location__status,
+  .checkout-location__coords {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    font-size: .9rem;
+    line-height: 1.45;
+  }
+
+  .checkout-location__status {
+    padding: 11px 12px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    background: var(--app-surface-soft);
+    color: var(--app-text);
+    font-weight: 800;
+  }
+
+  .checkout-location__status i,
+  .checkout-location__coords i {
+    margin-top: 3px;
+    color: var(--app-accent);
+  }
+
+  .checkout-location__coords {
+    color: var(--app-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .checkout-location__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .checkout-location__link {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: fit-content;
+    padding-inline: 13px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    background: var(--app-surface);
+    color: var(--app-primary);
+    font-size: .86rem;
+    font-weight: 900;
+  }
+
+  .checkout-location__retry {
+    min-height: 38px;
+    padding-inline: 13px;
+  }
+
+  .checkout-location__link:hover {
+    border-color: var(--app-border-strong);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .checkout-location__map {
+    position: relative;
+    overflow: hidden;
+    min-height: 340px;
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .checkout-location__map iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 340px;
+    border: 0;
+  }
+
+  .checkout-location__pin {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 11px;
+    border: 1px solid rgb(255 255 255 / 70%);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 92%);
+    color: var(--app-primary);
+    font-size: .82rem;
+    font-weight: 900;
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .checkout-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 720px) {
+    .checkout-location {
+      grid-template-columns: 1fr;
+    }
+
+    .checkout-location__link,
+    .checkout-location__retry,
+    .checkout-actions .btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <header class="page-header">
     <div>
@@ -13,13 +182,48 @@
 
 <form method="post" class="split-layout" novalidate>
     {% csrf_token %}
-    <section class="form-card">
-        <div class="form-field">
-            <label>Adresse complete</label>
-            <textarea class="textarea" name="shipping_address" rows="6" required placeholder="Adresse, ville, code postal"></textarea>
+    <section class="form-card checkout-form-card">
+        <input type="hidden" name="shipping_address" required data-checkout-location-value>
+        <div class="checkout-location">
+            <div class="checkout-location__info">
+                <div class="checkout-location__header">
+                    <span>Adresse de livraison</span>
+                    <strong>Localisation automatique avec Google Maps</strong>
+                </div>
+                <p class="checkout-location__copy">Autorisez la localisation du navigateur pour enregistrer votre position actuelle comme adresse de livraison.</p>
+                <p class="checkout-location__status" data-checkout-location-status>
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Detection de votre position en cours...
+                </p>
+                <p class="checkout-location__coords" data-checkout-location-coords>
+                    <i class="fas fa-location-crosshairs"></i>
+                    Coordonnees en attente
+                </p>
+                <div class="checkout-location__actions">
+                    <button class="btn btn-secondary checkout-location__retry" type="button" data-checkout-location-retry>
+                        <i class="fas fa-location-crosshairs"></i>
+                        Me localiser
+                    </button>
+                    <a class="checkout-location__link" href="https://www.google.com/maps/search/?api=1&query=Casablanca%2C%20Maroc" target="_blank" rel="noopener" data-checkout-maps-link>
+                        <i class="fas fa-up-right-from-square"></i>
+                        Ouvrir Maps
+                    </a>
+                </div>
+            </div>
+            <div class="checkout-location__map">
+                <span class="checkout-location__pin"><i class="fas fa-map-marker-alt"></i> Position actuelle</span>
+                <iframe
+                    title="Carte de localisation actuelle"
+                    src="https://www.google.com/maps?q=Casablanca%2C%20Maroc&output=embed"
+                    loading="lazy"
+                    data-checkout-map
+                    referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
         </div>
-        <button class="btn btn-primary" type="submit"><i class="fas fa-arrow-right"></i> Creer la commande</button>
-        <a href="{% url 'cart:cart' %}" class="btn btn-ghost">Retour au panier</a>
+        <div class="checkout-actions">
+            <button class="btn btn-primary" type="submit" data-checkout-submit disabled><i class="fas fa-arrow-right"></i> Creer la commande</button>
+            <a href="{% url 'cart:cart' %}" class="btn btn-ghost">Retour au panier</a>
+        </div>
     </section>
     <aside class="summary-panel">
         <h2>Panier</h2>
@@ -29,7 +233,89 @@
                 <strong>{{ item.get_total }} DH</strong>
             </div>
         {% endfor %}
+        <div class="summary-row"><span>Sous-total</span><strong>{{ subtotal }} DH</strong></div>
+        <div class="summary-row"><span>Livraison fixe</span><strong>{{ shipping_cost }} DH</strong></div>
+        {% if discount %}
+            <div class="summary-row"><span>Remise fidelite 6eme livre ({{ discount_percentage }}%)</span><strong>-{{ discount }} DH</strong></div>
+        {% endif %}
         <div class="summary-row summary-total"><span>Total</span><strong>{{ total }} DH</strong></div>
     </aside>
 </form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (() => {
+    const locationValue = document.querySelector('[data-checkout-location-value]');
+    const status = document.querySelector('[data-checkout-location-status]');
+    const coords = document.querySelector('[data-checkout-location-coords]');
+    const map = document.querySelector('[data-checkout-map]');
+    const link = document.querySelector('[data-checkout-maps-link]');
+    const retry = document.querySelector('[data-checkout-location-retry]');
+    const submit = document.querySelector('[data-checkout-submit]');
+
+    if (!locationValue || !status || !coords || !map || !link || !retry || !submit) return;
+
+    const fallbackQuery = encodeURIComponent('Casablanca, Maroc');
+
+    const setStatus = (iconClass, text) => {
+      status.innerHTML = `<i class="${iconClass}"></i>${text}`;
+    };
+
+    const setMap = (query) => {
+      map.src = `https://www.google.com/maps?q=${query}&z=17&output=embed`;
+      link.href = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    };
+
+    const useFallbackMap = () => {
+      setMap(fallbackQuery);
+      submit.disabled = true;
+    };
+
+    const locate = () => {
+      if (!navigator.geolocation) {
+        setStatus('fas fa-triangle-exclamation', 'Votre navigateur ne supporte pas la localisation automatique.');
+        coords.innerHTML = '<i class="fas fa-location-crosshairs"></i>Position non disponible';
+        useFallbackMap();
+        return;
+      }
+
+      submit.disabled = true;
+      retry.disabled = true;
+      setStatus('fas fa-spinner fa-spin', 'Detection de votre position en cours...');
+      coords.innerHTML = '<i class="fas fa-location-crosshairs"></i>Coordonnees en attente';
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latitude = position.coords.latitude.toFixed(6);
+          const longitude = position.coords.longitude.toFixed(6);
+          const accuracy = Math.round(position.coords.accuracy);
+          const query = encodeURIComponent(`${latitude},${longitude}`);
+
+          locationValue.value = `Position GPS: ${latitude}, ${longitude} (precision ${accuracy} m)`;
+          setMap(query);
+          setStatus('fas fa-circle-check', 'Position detectee. Votre adresse GPS sera utilisee pour la livraison.');
+          coords.innerHTML = `<i class="fas fa-location-crosshairs"></i>${latitude}, ${longitude} - precision ${accuracy} m`;
+          submit.disabled = false;
+          retry.disabled = false;
+        },
+        () => {
+          locationValue.value = '';
+          setStatus('fas fa-triangle-exclamation', 'Localisation refusee ou indisponible. Cliquez sur "Me localiser" et autorisez le navigateur.');
+          coords.innerHTML = '<i class="fas fa-location-crosshairs"></i>Position non detectee';
+          useFallbackMap();
+          retry.disabled = false;
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 12000,
+          maximumAge: 0
+        }
+      );
+    };
+
+    retry.addEventListener('click', locate);
+    locate();
+  })();
+</script>
 {% endblock %}

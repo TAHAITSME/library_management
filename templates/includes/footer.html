@@ -1,30 +1,65 @@
 <footer class="app-footer">
-    <div class="app-container app-footer__grid">
-        <section>
+    <div class="app-container app-footer__top">
+        <section class="app-footer__about">
             <a href="{% url 'home' %}" class="app-brand app-footer__brand">
                 <span class="app-brand__mark"><i class="fas fa-book-open"></i></span>
                 <span class="app-brand__text">BiblioNUM</span>
             </a>
-            <p>Plateforme de gestion de bibliotheque, d'emprunts et de vente de livres.</p>
+            <p>Bibliotheque numerique pour consulter le catalogue, reserver, emprunter et commander vos livres avec un suivi clair.</p>
+            <div class="app-footer__meta">
+                <span><i class="fas fa-shield-halved"></i> Paiement securise</span>
+                <span><i class="fas fa-truck"></i> Livraison suivie</span>
+            </div>
         </section>
-        <section>
-            <h2>Navigation</h2>
+
+        <nav class="app-footer__links" aria-label="Navigation principale">
+            <h2>Explorer</h2>
             <a href="{% url 'home' %}">Accueil</a>
             <a href="{% url 'catalog:books_list' %}">Catalogue</a>
-            {% if user.is_authenticated %}<a href="{% url 'accounts:account' %}">Mon espace</a>{% endif %}
-        </section>
-        <section>
-            <h2>Compte</h2>
             {% if user.is_authenticated %}
-                <a href="{% url 'accounts:profile' %}">Profil</a>
-                <a href="{% url 'orders:orders_list' %}">Commandes</a>
+                <a href="{% url 'accounts:account' %}">Espace client</a>
+                <a href="{% url 'borrowing:borrow_list' %}">Mes emprunts</a>
             {% else %}
                 <a href="{% url 'accounts:login' %}">Connexion</a>
-                <a href="{% url 'accounts:register' %}">Inscription</a>
+                <a href="{% url 'accounts:register' %}">Creer un compte</a>
             {% endif %}
+        </nav>
+
+        <nav class="app-footer__links" aria-label="Services utilisateur">
+            <h2>Services</h2>
+            {% if user.is_authenticated %}
+                <a href="{% url 'orders:orders_list' %}">Commandes</a>
+                <a href="{% url 'reservations:list' %}">Reservations</a>
+                <a href="{% url 'cart:cart' %}">Panier</a>
+                <a href="{% url 'accounts:profile' %}">Profil</a>
+            {% else %}
+                <a href="{% url 'catalog:books_list' %}">Rechercher un livre</a>
+                <a href="{% url 'accounts:login' %}">Suivre mes commandes</a>
+                <a href="{% url 'accounts:login' %}">Gerer mes reservations</a>
+                <a href="{% url 'accounts:login' %}">Demander un emprunt</a>
+            {% endif %}
+        </nav>
+
+        <section class="app-footer__contact">
+            <h2>Contact</h2>
+            <ul>
+                <li><i class="fas fa-location-dot"></i><span>Casablanca, Maroc</span></li>
+                <li><i class="fas fa-envelope"></i><span>contact@biblionum.ma</span></li>
+                <li><i class="fas fa-phone"></i><span>+212 6 43 26 22 60</span></li>
+                <li><i class="fas fa-calendar-days"></i><span>Lun - Sam, 09:00 - 18:00</span></li>
+            </ul>
         </section>
     </div>
+
     <div class="app-container app-footer__bottom">
         <span>&copy; 2026 BiblioNUM. Tous droits reserves.</span>
+        <nav aria-label="Liens rapides du pied de page">
+            <a href="{% url 'catalog:books_list' %}">Catalogue</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'accounts:account' %}">Mon espace</a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}">Connexion</a>
+            {% endif %}
+        </nav>
     </div>
 </footer>
