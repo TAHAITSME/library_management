@@ -14,7 +14,7 @@ class CustomUser(AbstractUser):
     ]
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
-    avatar = models.ImageField(upload_to='accounts/avatars/', null=True, blank=True, help_text='Photo de profil')
+    avatar = models.ImageField(upload_to='accounts/avatars/', max_length=255, null=True, blank=True, help_text='Photo de profil')
     bio = models.TextField(blank=True)
     phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
@@ -31,6 +31,15 @@ class CustomUser(AbstractUser):
     
     def __str__(self):
         return f"{self.get_full_name()} ({self.get_role_display()})"
+
+    @property
+    def avatar_url(self):
+        if not self.avatar:
+            return ''
+        try:
+            return self.avatar.url
+        except ValueError:
+            return ''
 
 
 class Profile(models.Model):

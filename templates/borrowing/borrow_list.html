@@ -41,8 +41,8 @@
 <header class="page-header">
     <div>
         <p class="eyebrow">Emprunts</p>
-        <h1>Vos livres empruntes</h1>
-        <p>Suivez les retours prevus, les retards et l'historique des livres rendus.</p>
+        <h1>Vos livres empruntés</h1>
+        <p>Chaque emprunt coûte 30% du prix du livre. Après 30 jours, ce coût est doublé.</p>
     </div>
     <a href="{% url 'catalog:books_list' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Emprunter un livre</a>
 </header>
@@ -51,7 +51,7 @@
 <section class="metric-grid section">
     <div class="metric-card"><span>Actifs</span><strong>{{ stats.total_active }}</strong></div>
     <div class="metric-card"><span>En retard</span><strong>{{ stats.overdue_count }}</strong></div>
-    <div class="metric-card"><span>Penalites</span><strong>{{ stats.total_fine|floatformat:2 }} DH</strong></div>
+    <div class="metric-card"><span>Amendes</span><strong>{{ stats.total_fine|floatformat:2 }} DH</strong></div>
     <div class="metric-card"><span>Historique</span><strong>{{ returned_borrows|length }}</strong></div>
 </section>
 {% endif %}
@@ -73,8 +73,12 @@
                     <h2>{{ borrow.book.title }}</h2>
                     <p class="book-card__meta">{{ borrow.book.author }}</p>
                     <div class="meta-row">
-                        <span>Emprunte le {{ borrow.borrow_date|date:"d/m/Y" }}</span>
-                        <span>Retour prevu {{ borrow.due_date|date:"d/m/Y" }}</span>
+                        <span>Emprunté le {{ borrow.borrow_date|date:"d/m/Y" }}</span>
+                        <span>Retour prévu {{ borrow.due_date|date:"d/m/Y" }}</span>
+                        <span>Frais {{ borrow.borrow_fee|floatformat:2 }} DH</span>
+                        {% if borrow.fine_amount > 0 %}
+                            <span>Total dû {{ borrow.amount_due|floatformat:2 }} DH</span>
+                        {% endif %}
                         {% if borrow.get_days_left < 0 %}
                             <span class="borrow-countdown is-danger">
                                 <i class="fas fa-triangle-exclamation"></i>
@@ -95,7 +99,7 @@
                 </div>
                 <div class="action-stack">
                     <span class="badge badge-{{ borrow.status }}">{{ borrow.get_status_display }}</span>
-                    <a href="{% url 'borrowing:borrow_detail' borrow.id %}" class="btn btn-ghost btn-sm">Details</a>
+                    <a href="{% url 'borrowing:borrow_detail' borrow.id %}" class="btn btn-ghost btn-sm">Détails</a>
                     <form method="post" action="{% url 'borrowing:return_book' borrow.id %}">
                         {% csrf_token %}
                         <button class="btn btn-primary btn-sm" type="submit">Retourner</button>
@@ -104,7 +108,7 @@
             </article>
         {% endfor %}
     {% else %}
-        {% include 'components/empty_state.html' with icon='book' title='Aucun emprunt actif' message='Les livres empruntes apparaitront ici.' %}
+        {% include 'components/empty_state.html' with icon='book' title='Aucun emprunt actif' message='Les livres empruntés apparaîtront ici.' %}
     {% endif %}
 </section>
 
@@ -119,9 +123,9 @@
                     </div>
                     <div class="book-card__body">
                         <h3>{{ borrow.book.title }}</h3>
-                        <p class="book-card__meta">Retourne le {{ borrow.return_date|date:"d/m/Y" }}</p>
+                        <p class="book-card__meta">Retourné le {{ borrow.return_date|date:"d/m/Y" }}</p>
                         {% if borrow.fine_amount > 0 %}
-                            <span class="badge badge-warning">Penalite {{ borrow.fine_amount }} DH</span>
+                            <span class="badge badge-warning">Amende {{ borrow.fine_amount }} DH</span>
                         {% else %}
                             <span class="badge badge-success">A temps</span>
                         {% endif %}
@@ -130,7 +134,7 @@
             {% endfor %}
         </div>
     {% else %}
-        {% include 'components/empty_state.html' with icon='clock-rotate-left' title='Aucun historique' message='Vos anciens emprunts apparaitront ici.' %}
+        {% include 'components/empty_state.html' with icon='clock-rotate-left' title='Aucun historique' message='Vos anciens emprunts apparaîtront ici.' %}
     {% endif %}
 </section>
 {% endblock %}

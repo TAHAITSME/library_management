@@ -251,6 +251,10 @@ class DashboardHomeView(StaffRequiredMixin, DashboardContextMixin, TemplateView)
         max_category_revenue = max([float(item['revenue'] or 0) for item in category_sales] or [0])
         for item in category_sales:
             item['percent'] = round((float(item['revenue'] or 0) / max_category_revenue) * 100, 2) if max_category_revenue else 0
+        revenue_axis_labels = [
+            round(max_revenue * ratio, 0)
+            for ratio in (1, .75, .5, .25, 0)
+        ]
         line_points = []
         area_points = ['0,92']
         for index, item in enumerate(revenue_bars):
@@ -301,6 +305,7 @@ class DashboardHomeView(StaffRequiredMixin, DashboardContextMixin, TemplateView)
             },
             'top_books_chart': json.dumps(top_books_chart),
             'revenue_bars': revenue_bars,
+            'revenue_axis_labels': revenue_axis_labels,
             'revenue_line_points': ' '.join(line_points),
             'revenue_area_points': ' '.join(area_points),
             'top_books': top_books,

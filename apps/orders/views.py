@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.db import models, transaction
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
@@ -63,12 +64,14 @@ def payments_admin_list_view(request):
 @login_required
 def orders_list_view(request):
     orders = Order.objects.filter(user=request.user).prefetch_related('items__book').order_by('-created_at')
-    pending_orders = orders.exclude(payment_status='paid')
+    pending_orders = orders.filter(payment_status__in=['pending', 'failed']).exclude(status='cancelled')
     paid_orders = orders.filter(payment_status='paid')
+    other_orders = orders.filter(Q(status='cancelled') | Q(payment_status='refunded'))
     return render(request, 'orders/orders_list.html', {
         'orders': orders,
         'pending_orders': pending_orders,
         'paid_orders': paid_orders,
+        'other_orders': other_orders,
     })
 
 
@@ -176,6 +179,10 @@ def order_payment_view(request, order_id):
         messages.info(request, 'Cette commande est deja payee.')
         return redirect('orders:order_detail', order_id=order.id)
 
+    if not order.is_payable:
+        messages.warning(request, "Cette commande ne peut pas etre payee dans son etat actuel.")
+        return redirect('orders:order_detail', order_id=order.id)
+
     return render(request, 'orders/order_payment.html', {
         'order': order,
         'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
@@ -195,8 +202,16 @@ def create_stripe_checkout_session_view(request, order_id):
         messages.info(request, 'Cette commande est deja payee.')
         return redirect('orders:order_detail', order_id=order.id)
 
+    if not order.is_payable:
+        messages.warning(request, "Cette commande ne peut pas etre payee dans son etat actuel.")
+        return redirect('orders:order_detail', order_id=order.id)
+
     if not order.items.exists():
         messages.error(request, 'Impossible de payer une commande vide.')
+        return redirect('orders:order_detail', order_id=order.id)
+
+    if order.total <= 0:
+        messages.error(request, 'Impossible de payer une commande avec un total nul ou negatif.')
         return redirect('orders:order_detail', order_id=order.id)
 
     try:

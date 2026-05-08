@@ -93,7 +93,7 @@
 
   .order-card {
     display: grid;
-    grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(120px, .65fr)) auto;
+    grid-template-columns: minmax(220px, 1.2fr) repeat(4, minmax(120px, .65fr)) auto;
     gap: 18px;
     align-items: center;
     padding: 18px;
@@ -202,6 +202,21 @@
     color: var(--app-danger);
   }
 
+  .status-pill--paid {
+    background: var(--app-success-soft);
+    color: var(--app-success);
+  }
+
+  .status-pill--failed {
+    background: var(--app-danger-soft);
+    color: var(--app-danger);
+  }
+
+  .status-pill--refunded {
+    background: var(--app-info-soft);
+    color: var(--app-info);
+  }
+
   .orders-empty {
     overflow: hidden;
     display: grid;
@@ -280,7 +295,7 @@
         <div class="orders-hero__copy">
             <p class="eyebrow">Commandes</p>
             <h1>Vos achats, clairement suivis.</h1>
-            <p>Retrouvez chaque commande, son statut, son total et ses details au meme endroit.</p>
+            <p>Retrouvez chaque commande, son paiement, son statut de traitement et ses détails au même endroit.</p>
         </div>
         <a href="{% url 'catalog:books_list' %}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Nouvelle commande
@@ -288,18 +303,18 @@
     </header>
 
     {% if orders %}
-        <section class="orders-summary" aria-label="Resume des commandes">
+        <section class="orders-summary" aria-label="Résumé des commandes">
             <article class="orders-summary__card">
                 <span class="orders-summary__icon"><i class="fas fa-receipt"></i></span>
                 <div>
-                    <span>A payer</span>
+                    <span>À payer</span>
                     <strong>{{ pending_orders|length }}</strong>
                 </div>
             </article>
             <article class="orders-summary__card">
                 <span class="orders-summary__icon"><i class="fas fa-clock"></i></span>
                 <div>
-                    <span>Derniere activite</span>
+                    <span>Dernière activité</span>
                     <strong>{{ orders.0.created_at|date:"d/m/Y" }}</strong>
                 </div>
             </article>
@@ -312,8 +327,8 @@
             </article>
         </section>
 
-        <section class="orders-list" aria-label="Commandes a payer">
-            <h2>Commandes a payer</h2>
+        <section class="orders-list" aria-label="Commandes à payer">
+            <h2>Commandes à payer</h2>
             {% for order in pending_orders %}
                 <article class="order-card">
                     <div class="order-card__main">
@@ -335,25 +350,30 @@
                     </div>
 
                     <div class="order-field">
-                        <span>Statut</span>
+                        <span>Paiement</span>
+                        <strong class="status-pill status-pill--{{ order.payment_status }}">{{ order.payment_state_label }}</strong>
+                    </div>
+
+                    <div class="order-field">
+                        <span>Commande</span>
                         <strong class="status-pill status-pill--{{ order.status }}">{{ order.get_status_display }}</strong>
                     </div>
 
                     <div class="order-card__actions">
-                        {% if order.payment_status != 'paid' and order.status != 'cancelled' %}
+                        {% if order.is_payable %}
                             <a href="{% url 'orders:order_payment' order.id %}" class="btn btn-primary btn-sm">Payer</a>
                         {% endif %}
                         <a href="{% url 'orders:order_pdf' order.id %}" class="btn btn-secondary btn-sm">
                             <i class="fas fa-file-pdf"></i> PDF
                         </a>
-                        <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost btn-sm">Details</a>
+                        <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost btn-sm">Détails</a>
                     </div>
                 </article>
             {% empty %}
                 <div class="orders-empty">
                     <div>
                         <p class="eyebrow">Aucune commande en attente</p>
-                        <h2>Toutes vos commandes sont reglees.</h2>
+                        <h2>Toutes vos commandes sont réglées.</h2>
                     </div>
                 </div>
             {% endfor %}
@@ -361,7 +381,7 @@
 
         {% if paid_orders %}
             <section class="orders-list" aria-label="Historique des achats">
-                <h2>Achats payes</h2>
+                <h2>Achats payés</h2>
                 {% for order in paid_orders %}
                     <article class="order-card">
                         <div class="order-card__main">
@@ -384,14 +404,63 @@
 
                         <div class="order-field">
                             <span>Paiement</span>
-                            <strong class="status-pill status-pill--delivered">Paye</strong>
+                            <strong class="status-pill status-pill--paid">{{ order.payment_state_label }}</strong>
+                        </div>
+
+                        <div class="order-field">
+                            <span>Commande</span>
+                            <strong class="status-pill status-pill--{{ order.status }}">{{ order.get_status_display }}</strong>
                         </div>
 
                         <div class="order-card__actions">
                             <a href="{% url 'orders:order_pdf' order.id %}" class="btn btn-secondary btn-sm">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </a>
-                            <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost btn-sm">Details</a>
+                            <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost btn-sm">Détails</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        {% if other_orders %}
+            <section class="orders-list" aria-label="Commandes clôturées">
+                <h2>Commandes clôturées</h2>
+                {% for order in other_orders %}
+                    <article class="order-card">
+                        <div class="order-card__main">
+                            <div class="order-card__number">
+                                <i class="fas fa-ban"></i>
+                                <span>{{ order.order_number }}</span>
+                            </div>
+                            <div class="order-card__meta">{{ order.user }} - {{ order.created_at|date:"d/m/Y H:i" }}</div>
+                        </div>
+
+                        <div class="order-field">
+                            <span>Articles</span>
+                            <strong>{{ order.items.count }}</strong>
+                        </div>
+
+                        <div class="order-field">
+                            <span>Total</span>
+                            <strong>{{ order.total }} DH</strong>
+                        </div>
+
+                        <div class="order-field">
+                            <span>Paiement</span>
+                            <strong class="status-pill status-pill--{{ order.payment_status }}">{{ order.payment_state_label }}</strong>
+                        </div>
+
+                        <div class="order-field">
+                            <span>Commande</span>
+                            <strong class="status-pill status-pill--{{ order.status }}">{{ order.get_status_display }}</strong>
+                        </div>
+
+                        <div class="order-card__actions">
+                            <a href="{% url 'orders:order_pdf' order.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </a>
+                            <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost btn-sm">Détails</a>
                         </div>
                     </article>
                 {% endfor %}

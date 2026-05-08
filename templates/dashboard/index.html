@@ -118,49 +118,96 @@
     font-weight: 800;
   }
 
+  .admin-revenue-card {
+    overflow: hidden;
+  }
+
   .admin-revenue-chart {
-    height: 290px;
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 14px;
-    align-items: end;
-    padding: 16px 8px 4px;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 12px;
+    min-height: 310px;
+    padding: 12px 0 0;
     border-top: 1px solid #edf2f7;
   }
 
-  .admin-bar {
-    min-width: 0;
-    height: 100%;
+  .admin-chart-axis {
     display: grid;
-    grid-template-rows: auto 1fr auto;
-    gap: 8px;
-    align-items: end;
+    grid-template-rows: repeat(5, 1fr);
+    padding: 4px 0 28px;
+    color: #8a96a8;
+    font-size: .72rem;
+    font-weight: 800;
+    text-align: right;
   }
 
-  .admin-bar strong,
-  .admin-bar span {
+  .admin-chart-stage {
+    position: relative;
+    min-height: 280px;
     overflow: hidden;
-    color: #6d7b8f;
+    border-radius: 12px;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(25% - 1px),
+        #edf2f7 calc(25% - 1px),
+        #edf2f7 25%
+      );
+  }
+
+  .admin-chart-stage svg {
+    position: absolute;
+    inset: 0 0 28px 0;
+    width: 100%;
+    height: calc(100% - 28px);
+  }
+
+  .admin-chart-area {
+    fill: url(#adminRevenueGradient);
+  }
+
+  .admin-chart-line {
+    fill: none;
+    stroke: #5f96e8;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .admin-chart-point {
+    fill: #ffffff;
+    stroke: #5f96e8;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .admin-chart-value {
+    position: absolute;
+    transform: translate(-50%, -118%);
+    padding: 5px 8px;
+    border: 1px solid #dfe6ef;
+    border-radius: 8px;
+    background: #fff;
+    color: #253244;
     font-size: .72rem;
-    text-align: center;
-    text-overflow: ellipsis;
+    font-weight: 900;
+    box-shadow: 0 8px 18px rgb(38 52 71 / 10%);
     white-space: nowrap;
   }
 
-  .admin-bar__track {
-    width: 100%;
-    height: 100%;
-    display: flex;
+  .admin-chart-labels {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 28px;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     align-items: end;
-    border-radius: 8px;
-    background: #f1f5fb;
-  }
-
-  .admin-bar__fill {
-    width: 100%;
-    min-height: 6px;
-    border-radius: 8px;
-    background: #2f8ee0;
+    color: #6d7b8f;
+    font-size: .76rem;
+    font-weight: 800;
+    text-align: center;
   }
 
   .admin-book-list,
@@ -313,24 +360,47 @@
     </section>
 
     <section class="admin-grid">
-        <article class="admin-card admin-panel">
+        <article class="admin-card admin-panel admin-revenue-card">
             <div class="admin-panel__head">
                 <div>
                     <h3>Revenus mensuels</h3>
-                    <p>Commandes reellement payees sur les 6 derniers mois.</p>
+                    <p>Evolution des commandes payees sur les 6 derniers mois.</p>
                 </div>
                 <span class="admin-chip">{{ total_revenue }} DH total</span>
             </div>
             <div class="admin-revenue-chart">
-                {% for item in revenue_bars %}
-                    <div class="admin-bar">
-                        <strong>{{ item.value|floatformat:0 }} DH</strong>
-                        <div class="admin-bar__track">
-                            <div class="admin-bar__fill" style="height: {{ item.percent|default:0 }}%;"></div>
-                        </div>
-                        <span>{{ item.label }}</span>
+                <div class="admin-chart-axis" aria-hidden="true">
+                    {% for value in revenue_axis_labels %}
+                        <span>{{ value|floatformat:0 }} DH</span>
+                    {% endfor %}
+                </div>
+                <div class="admin-chart-stage">
+                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Courbe des revenus mensuels">
+                        <defs>
+                            <linearGradient id="adminRevenueGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#6fa8f5" stop-opacity=".46" />
+                                <stop offset="100%" stop-color="#6fa8f5" stop-opacity=".08" />
+                            </linearGradient>
+                        </defs>
+                        <polygon class="admin-chart-area" points="{{ revenue_area_points }}"></polygon>
+                        <polyline class="admin-chart-line" points="{{ revenue_line_points }}"></polyline>
+                        {% for item in revenue_bars %}
+                            {% if item.value %}
+                                <circle class="admin-chart-point" cx="{{ item.x }}" cy="{{ item.y }}" r="1.55"></circle>
+                            {% endif %}
+                        {% endfor %}
+                    </svg>
+                    {% for item in revenue_bars %}
+                        {% if item.value %}
+                            <span class="admin-chart-value" style="left: {{ item.x }}%; top: {{ item.y }}%;">{{ item.value|floatformat:0 }} DH</span>
+                        {% endif %}
+                    {% endfor %}
+                    <div class="admin-chart-labels">
+                        {% for item in revenue_bars %}
+                            <span>{{ item.label }}</span>
+                        {% endfor %}
                     </div>
-                {% endfor %}
+                </div>
             </div>
         </article>
 

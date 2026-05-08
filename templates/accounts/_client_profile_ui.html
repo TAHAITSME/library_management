@@ -25,10 +25,10 @@
 
   .client-space-page,
   .profile-page {
-    width: min(100%, 1220px);
+    width: min(100%, 1280px);
     margin-inline: auto;
     display: grid;
-    gap: 24px;
+    gap: 22px;
     color: var(--color-text);
     font-family: Inter, system-ui, sans-serif;
   }
@@ -42,12 +42,12 @@
   }
 
   .client-hero {
-    min-height: 220px;
+    min-height: 190px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    padding: clamp(26px, 5vw, 44px);
+    padding: clamp(26px, 4vw, 42px);
   }
 
   .client-hero__identity {
@@ -72,6 +72,14 @@
     color: #fff;
     font-size: 1.45rem;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .26);
+    overflow: hidden;
+  }
+
+  .client-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
   }
 
   .client-hero .eyebrow,
@@ -87,7 +95,7 @@
   .profile-hero h1 {
     margin: 0;
     color: #fff;
-    font-size: clamp(2.45rem, 5vw, 4.4rem);
+    font-size: clamp(2.25rem, 4vw, 3.8rem);
     line-height: 1;
     font-weight: 900;
   }
@@ -128,17 +136,17 @@
   .client-metrics {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-    transform: translateY(-38px);
-    margin-bottom: -18px;
+    gap: 14px;
+    transform: translateY(-30px);
+    margin-bottom: -10px;
   }
 
   .client-metric {
-    min-height: 154px;
+    min-height: 132px;
     display: grid;
     align-content: start;
-    gap: 11px;
-    padding: 22px;
+    gap: 9px;
+    padding: 18px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-surface);
@@ -153,8 +161,8 @@
   }
 
   .client-metric__icon {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -168,7 +176,7 @@
 
   .client-metric strong {
     color: var(--color-text);
-    font-size: clamp(2rem, 3vw, 2.6rem);
+    font-size: clamp(1.85rem, 2.6vw, 2.35rem);
     line-height: 1;
     font-weight: 900;
   }
@@ -182,7 +190,8 @@
   .client-tables {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
+    gap: 18px;
+    align-items: stretch;
   }
 
   .client-table-card,
@@ -197,6 +206,9 @@
 
   .client-table-card {
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 360px;
   }
 
   .client-table-card .table-card__header {
@@ -224,13 +236,19 @@
   .client-table-card table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
   }
 
   .client-table-card th,
   .client-table-card td {
-    padding: 15px 18px;
+    padding: 13px 16px;
     text-align: left;
     border-bottom: 1px solid var(--color-border);
+    vertical-align: top;
+  }
+
+  .client-table-card td {
+    overflow-wrap: anywhere;
   }
 
   .client-table-card th {
@@ -263,17 +281,17 @@
 
   .client-shortcuts {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
   }
 
   .client-shortcuts a {
-    min-height: 178px;
+    min-height: 142px;
     display: grid;
     justify-items: center;
     align-content: center;
     gap: 10px;
-    padding: 24px;
+    padding: 20px;
     color: var(--color-text);
     text-align: center;
     text-decoration: none;
@@ -281,16 +299,16 @@
   }
 
   .client-shortcuts svg {
-    width: 52px;
-    height: 52px;
-    padding: 14px;
+    width: 44px;
+    height: 44px;
+    padding: 12px;
     border-radius: var(--radius-full);
     background: rgba(79, 152, 163, .12);
     color: var(--color-accent);
   }
 
   .client-shortcuts strong {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .client-shortcuts span {
@@ -508,10 +526,13 @@
 
     .client-metrics,
     .client-tables,
-    .client-shortcuts,
     .profile-layout,
     .profile-field-grid {
       grid-template-columns: 1fr;
+    }
+
+    .client-shortcuts {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .client-metrics {
@@ -521,6 +542,12 @@
 
     .profile-account-card {
       position: static;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .client-shortcuts {
+      grid-template-columns: 1fr;
     }
   }
 

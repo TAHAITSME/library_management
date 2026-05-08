@@ -116,12 +116,45 @@ class OrderStatusForm(DashboardModelForm):
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['payment_status'].disabled = True
+        self.fields['payment_status'].help_text = (
+            "Statut informatif: il est mis a jour par Stripe et ne doit pas etre force depuis la commande."
+        )
+
+    def clean(self):
+        cleaned = super().clean()
+        status = cleaned.get('status')
+        payment_status = cleaned.get('payment_status')
+
+        if status in ('processing', 'shipped', 'delivered') and payment_status != 'paid':
+            self.add_error(
+                'status',
+                "Une commande non payee ne peut pas passer en preparation, expedition ou livraison."
+            )
+
+        return cleaned
+
 
 class PaymentForm(DashboardModelForm):
     class Meta:
         model = Payment
         fields = ['order', 'amount', 'payment_method', 'status', 'transaction_id', 'completed_at']
         widgets = {'completed_at': forms.DateTimeInput(attrs={'type': 'datetime-local'})}
+
+    def clean(self):
+        cleaned = super().clean()
+        order = cleaned.get('order')
+        status = cleaned.get('status')
+
+        if order and status == 'completed' and order.payment_status != 'paid':
+            self.add_error(
+                'status',
+                "Ce formulaire ne valide pas une commande. Le statut paye doit venir du flux Stripe."
+            )
+
+        return cleaned
 
 
 class InvoiceForm(DashboardModelForm):
@@ -137,7 +170,10 @@ class InvoiceForm(DashboardModelForm):
 class BorrowAdminForm(DashboardModelForm):
     class Meta:
         model = Borrow
-        fields = ['user', 'book', 'due_date', 'status', 'fine_amount', 'fine_paid', 'notes']
+        fields = [
+            'user', 'book', 'due_date', 'status', 'borrow_fee', 'amount_due',
+            'payment_status', 'fine_amount', 'fine_paid', 'notes',
+        ]
         widgets = {
             'due_date': forms.DateInput(attrs={'type': 'date'}),
             'notes': forms.Textarea(attrs={'rows': 3}),

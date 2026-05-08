@@ -20,10 +20,7 @@
         <div class="detail-cover__actions">
             <span class="badge badge-{{ reservation.status }}">{{ reservation.get_status_display }}</span>
             {% if is_ready %}
-                <form method="post" action="{% url 'borrowing:borrow_request' reservation.book.id %}">
-                    {% csrf_token %}
-                    <button class="btn btn-primary" type="submit">Demander l'emprunt</button>
-                </form>
+                <a class="btn btn-primary" href="{% url 'borrowing:borrow_request' reservation.book.id %}">Confirmer l'emprunt</a>
             {% endif %}
             {% if reservation.status == 'active' %}
                 <a href="{% url 'reservations:cancel' reservation.pk %}" class="btn btn-danger">Annuler</a>

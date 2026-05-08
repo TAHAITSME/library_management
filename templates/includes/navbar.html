@@ -52,7 +52,11 @@
             {% if user.is_authenticated %}
                 <div class="dropdown">
                     <button class="avatar-btn" type="button" data-dropdown-toggle="userDropdown" aria-label="Menu utilisateur">
-                        <span>{{ user.first_name|first|default:user.username|first|upper }}</span>
+                        {% if user.avatar_url %}
+                            <img src="{{ user.avatar_url }}" alt="{{ user.get_full_name|default:user.username }}">
+                        {% else %}
+                            <span>{{ user.first_name|first|default:user.username|first|upper }}</span>
+                        {% endif %}
                     </button>
                     <div id="userDropdown" class="dropdown-menu" data-dropdown>
                         {% if user.is_staff or user.is_superuser %}

@@ -11,12 +11,15 @@ class BorrowAdmin(admin.ModelAdmin):
         'borrow_date',
         'due_date',
         'return_date',
+        'borrow_fee',
+        'amount_due',
+        'payment_status',
         'is_overdue',
         'fine_amount',
         'fine_paid',
         'days_left',
     )
-    list_filter = ('status', 'is_overdue', 'fine_paid', 'borrow_date', 'due_date', 'return_date')
+    list_filter = ('status', 'payment_status', 'is_overdue', 'fine_paid', 'borrow_date', 'due_date', 'return_date')
     search_fields = ('user__username', 'user__email', 'book__title')
     readonly_fields = ('borrow_date',)
     autocomplete_fields = ('user', 'book')

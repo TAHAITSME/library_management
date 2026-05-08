@@ -11,12 +11,16 @@
     <header class="page-header client-hero">
         <div class="client-hero__identity">
             <div class="client-avatar" aria-hidden="true">
-                {{ user.first_name|default:user.username|first|upper }}{{ user.last_name|first|upper }}
+                {% if user.avatar_url %}
+                    <img src="{{ user.avatar_url }}" alt="{{ user.get_full_name|default:user.username }}">
+                {% else %}
+                    {{ user.first_name|default:user.username|first|upper }}{{ user.last_name|first|upper }}
+                {% endif %}
             </div>
             <div>
                 <p class="eyebrow">Espace client</p>
                 <h1>Bonjour {{ user.first_name|default:user.username }}</h1>
-                <p>Suivez vos livres empruntes, commandes, reservations et donnees de lecture.</p>
+                <p>Suivez vos livres empruntés, commandes, réservations et données de lecture.</p>
             </div>
         </div>
         <a href="{% url 'catalog:books_list' %}" class="client-hero__button">
@@ -43,14 +47,14 @@
         <div class="metric-card client-metric client-metric--purple" data-stagger>
             <span class="client-metric__icon"><i data-lucide="wallet-cards"></i></span>
             <strong data-count-value="{{ total_spent }}" data-count-suffix=" DH">0 DH</strong>
-            <span>Total depense</span>
+            <span>Total dépensé</span>
         </div>
     </section>
 
     <section class="account-grid client-tables">
         <article class="table-card client-table-card" data-stagger>
             <div class="table-card__header">
-                <h2>Livres commandes recents</h2>
+                <h2>Livres commandés récents</h2>
                 <a href="{% url 'orders:orders_list' %}">Tout voir</a>
             </div>
             {% if recent_order_items %}
@@ -73,18 +77,18 @@
                     </tbody>
                 </table>
             {% else %}
-                {% include 'components/empty_state.html' with icon='receipt' title='Aucun livre commande' message='Les livres achetes ou commandes apparaitront ici.' %}
+                {% include 'components/empty_state.html' with icon='receipt' title='Aucun livre commandé' message='Les livres achetés ou commandés apparaîtront ici.' %}
             {% endif %}
         </article>
 
         <article class="table-card client-table-card" data-stagger>
             <div class="table-card__header">
-                <h2>Emprunts recents</h2>
+                <h2>Emprunts récents</h2>
                 <a href="{% url 'borrowing:borrow_list' %}">Tout voir</a>
             </div>
             {% if recent_borrows %}
                 <table class="table-ui">
-                    <thead><tr><th>Livre</th><th>Retour prevu</th><th>Statut</th></tr></thead>
+                    <thead><tr><th>Livre</th><th>Retour prévu</th><th>Statut</th></tr></thead>
                     <tbody>
                     {% for borrow in recent_borrows %}
                         <tr>
@@ -110,7 +114,7 @@
         <a href="{% url 'borrowing:borrow_list' %}" class="data-card data-card__body" data-stagger>
             <i data-lucide="hand-heart"></i>
             <strong>Emprunts</strong>
-            <span>Voir les livres empruntes</span>
+            <span>Voir les livres empruntés</span>
         </a>
         <a href="{% url 'reservations:list' %}" class="data-card data-card__body" data-stagger>
             <i data-lucide="bookmark-check"></i>
@@ -119,8 +123,8 @@
         </a>
         <a href="{% url 'accounts:complaints' %}" class="data-card data-card__body" data-stagger>
             <i data-lucide="message-square-warning"></i>
-            <strong>Reclamation</strong>
-            <span>Signaler un probleme</span>
+            <strong>Réclamation</strong>
+            <span>Signaler un problème</span>
         </a>
     </section>
 </div>

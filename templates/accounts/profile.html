@@ -10,8 +10,8 @@
 <div class="profile-page">
     <header class="profile-hero">
         <div class="profile-hero__avatar" aria-hidden="true">
-            {% if user.avatar %}
-                <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name|default:user.username }}">
+            {% if user.avatar_url %}
+                <img src="{{ user.avatar_url }}" alt="{{ user.get_full_name|default:user.username }}">
             {% else %}
                 <span>{{ user.first_name|default:user.username|first|upper }}{{ user.last_name|first|upper }}</span>
             {% endif %}

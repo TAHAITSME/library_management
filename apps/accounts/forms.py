@@ -101,6 +101,25 @@ class ProfileForm(forms.ModelForm):
             raise forms.ValidationError('Cet email est deja utilise.')
         return email
 
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get('avatar')
+        if not avatar:
+            return avatar
+
+        content_type = getattr(avatar, 'content_type', '')
+        allowed_types = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
+        if content_type and content_type not in allowed_types:
+            raise forms.ValidationError('Format non supporte. Utilisez JPG, PNG, WEBP ou GIF.')
+
+        max_size = 5 * 1024 * 1024
+        if getattr(avatar, 'size', 0) > max_size:
+            raise forms.ValidationError('La photo ne doit pas depasser 5 Mo.')
+
+        if len(getattr(avatar, 'name', '')) > 220:
+            raise forms.ValidationError('Le nom du fichier est trop long. Renommez la photo avec un nom plus court.')
+
+        return avatar
+
 
 class ComplaintForm(forms.ModelForm):
     class Meta:

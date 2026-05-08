@@ -257,8 +257,8 @@
             <p>Mettez a jour vos coordonnees pour les commandes, emprunts et reservations.</p>
         </div>
         <span class="profile-edit-avatar">
-            {% if request.user.avatar %}
-                <img src="{{ request.user.avatar.url }}" alt="{{ request.user.get_full_name|default:request.user.username }}">
+            {% if request.user.avatar_url %}
+                <img src="{{ request.user.avatar_url }}" alt="{{ request.user.get_full_name|default:request.user.username }}">
             {% else %}
                 <i class="fas fa-user"></i>
             {% endif %}
@@ -310,8 +310,8 @@
                         <label for="{{ form.avatar.id_for_label }}">{{ form.avatar.label }}</label>
                         <div class="profile-photo-upload">
                             <div class="profile-photo-preview" data-avatar-preview>
-                                {% if request.user.avatar %}
-                                    <img src="{{ request.user.avatar.url }}" alt="{{ request.user.get_full_name|default:request.user.username }}">
+                                {% if request.user.avatar_url %}
+                                    <img src="{{ request.user.avatar_url }}" alt="{{ request.user.get_full_name|default:request.user.username }}">
                                 {% else %}
                                     <span>{{ request.user.first_name|default:request.user.username|first|upper }}{{ request.user.last_name|first|upper }}</span>
                                 {% endif %}

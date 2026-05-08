@@ -60,6 +60,31 @@ class Order(models.Model):
     
     def __str__(self):
         return f"Commande {self.order_number}"
+
+    @property
+    def is_payable(self):
+        """Une commande est payable uniquement avant validation du paiement."""
+        return self.status != 'cancelled' and self.payment_status in ('pending', 'failed')
+
+    @property
+    def payment_state_label(self):
+        labels = {
+            'pending': 'Paiement en attente',
+            'paid': 'Paiement confirmé',
+            'failed': 'Paiement échoué',
+            'refunded': 'Paiement remboursé',
+        }
+        return labels.get(self.payment_status, self.get_payment_status_display())
+
+    @property
+    def payment_state_hint(self):
+        hints = {
+            'pending': 'La commande est créée, mais aucun paiement validé côté serveur.',
+            'paid': 'Le paiement est validé, le stock est déduit et la facture peut être émise.',
+            'failed': 'La dernière tentative a échoué. Le client peut relancer le paiement.',
+            'refunded': 'Le paiement a été remboursé. La commande ne doit pas être retraitée sans contrôle.',
+        }
+        return hints.get(self.payment_status, '')
     
     def generate_order_number(self):
         """Générer un numéro de commande unique"""

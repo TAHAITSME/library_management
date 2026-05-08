@@ -8,11 +8,16 @@
     <h1>Confirmer le retour</h1>
     <p>{{ borrow.book.title }} par {{ borrow.book.author }}</p>
     <div class="spec-grid">
-        <div class="spec-card"><span>Emprunte le</span><strong>{{ borrow.borrow_date|date:"d/m/Y" }}</strong></div>
+        <div class="spec-card"><span>Emprunté le</span><strong>{{ borrow.borrow_date|date:"d/m/Y" }}</strong></div>
         <div class="spec-card"><span>Date limite</span><strong>{{ borrow.due_date|date:"d/m/Y" }}</strong></div>
         <div class="spec-card"><span>Statut</span><strong>{{ borrow.get_status_display }}</strong></div>
-        <div class="spec-card"><span>Penalite</span><strong>{{ borrow.fine_amount|floatformat:2 }} DH</strong></div>
+        <div class="spec-card"><span>Frais payés</span><strong>{{ borrow.borrow_fee|floatformat:2 }} DH</strong></div>
+        <div class="spec-card"><span>Amende</span><strong>{{ borrow.fine_amount|floatformat:2 }} DH</strong></div>
+        <div class="spec-card"><span>Total dû</span><strong>{{ borrow.amount_due|floatformat:2 }} DH</strong></div>
     </div>
+    {% if borrow.fine_amount > 0 %}
+        <p class="summary-hint">Cet emprunt est en retard: le coût d'emprunt est doublé.</p>
+    {% endif %}
     <form method="post" class="form-row-between">
         {% csrf_token %}
         <a href="{% url 'borrowing:borrow_detail' borrow.id %}" class="btn btn-ghost">Annuler</a>

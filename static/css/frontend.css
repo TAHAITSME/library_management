@@ -227,6 +227,14 @@ body {
   font-weight: 800;
 }
 
+.avatar-btn img {
+  width: 30px;
+  height: 30px;
+  display: block;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
 .count-badge {
   position: absolute;
   top: -6px;
@@ -2262,6 +2270,29 @@ body {
 .summary-total {
   font-size: 1.25rem;
   font-weight: 900;
+}
+
+.summary-hint {
+  margin: 12px 0 0;
+  color: var(--app-muted);
+  font-size: .88rem;
+  line-height: 1.45;
+}
+
+.summary-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.summary-actions .btn {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding-inline: 12px;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .line-list {

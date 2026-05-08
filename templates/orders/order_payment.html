@@ -99,7 +99,7 @@
 
   .order-context {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
     padding: 0 18px 18px;
   }
@@ -333,16 +333,16 @@
         <div>
             <p class="eyebrow">Paiement</p>
             <h1>Payer votre commande</h1>
-            <p>Confirmez le montant et continuez vers le paiement securise.</p>
+            <p>Confirmez le montant et continuez vers le paiement sécurisé.</p>
         </div>
-        <span class="pay-trust"><i class="fas fa-shield-halved"></i> Paiement securise</span>
+        <span class="pay-trust"><i class="fas fa-shield-halved"></i> Paiement sécurisé</span>
     </header>
 
     <div class="pay-layout">
         <section class="pay-card">
             <div class="pay-card__top">
                 <h2>Carte bancaire</h2>
-                <p>Un paiement rapide et securise pour finaliser votre achat.</p>
+                <p>Un paiement rapide et sécurisé pour finaliser votre achat.</p>
             </div>
 
             <article class="payment-choice">
@@ -367,6 +367,10 @@
                     <span>Livraison</span>
                     <strong>{{ order.shipping_cost }} DH</strong>
                 </div>
+                <div class="order-context__item">
+                    <span>Paiement</span>
+                    <strong>{{ order.payment_state_label }}</strong>
+                </div>
             </div>
 
             <form class="pay-actions" method="post" action="{% url 'orders:stripe_checkout' order.id %}">
@@ -374,17 +378,17 @@
                 <button class="btn btn-primary" type="submit">
                     <i class="fas fa-lock"></i> Payer {{ order.total }} DH
                 </button>
-                <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost">Retour a la commande</a>
+                <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-ghost">Retour à la commande</a>
                 <p class="pay-security">
                     <i class="fas fa-circle-check"></i>
-                    <span>Vos informations bancaires ne sont jamais stockees par BiblioNUM.</span>
+                    <span>Stripe facturera exactement le total affiché: {{ order.total }} DH. Vos informations bancaires ne sont jamais stockées par BiblioNUM.</span>
                 </p>
             </form>
         </section>
 
         <aside class="pay-summary">
             <div class="pay-summary__head">
-                <h2>Resume</h2>
+                <h2>Résumé</h2>
                 <small>{{ order.order_number }}</small>
             </div>
 
@@ -411,7 +415,7 @@
                 <div class="pay-line"><span>Sous-total</span><strong>{{ order.subtotal }} DH</strong></div>
                 <div class="pay-line"><span>Livraison</span><strong>{{ order.shipping_cost }} DH</strong></div>
                 {% if order.discount %}
-                    <div class="pay-line"><span>Remise fidelite</span><strong>-{{ order.discount }} DH</strong></div>
+                    <div class="pay-line"><span>Remise fidélité</span><strong>-{{ order.discount }} DH</strong></div>
                 {% endif %}
                 <div class="pay-line pay-total"><span>Total</span><strong>{{ order.total }} DH</strong></div>
             </div>

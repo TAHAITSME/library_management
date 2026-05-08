@@ -14,9 +14,9 @@
 
 <div class="split-layout">
     <section class="table-card">
-        <div class="table-card__header"><h2>Articles commandes</h2></div>
+        <div class="table-card__header"><h2>Articles commandés</h2></div>
         <table class="table-ui">
-            <thead><tr><th>Livre</th><th>Quantite</th><th>Prix</th><th>Total</th></tr></thead>
+            <thead><tr><th>Livre</th><th>Quantité</th><th>Prix</th><th>Total</th></tr></thead>
             <tbody>
                 {% for item in order.items.all %}
                     <tr>
@@ -34,22 +34,28 @@
         </div>
     </section>
     <aside class="summary-panel">
-        <h2>Resume</h2>
+        <h2>Résumé</h2>
         <div class="summary-row"><span>Sous-total</span><strong>{{ order.subtotal }} DH</strong></div>
         <div class="summary-row"><span>Livraison</span><strong>{{ order.shipping_cost }} DH</strong></div>
         {% if order.discount %}
-            <div class="summary-row"><span>Remise fidelite</span><strong>-{{ order.discount }} DH</strong></div>
+            <div class="summary-row"><span>Remise fidélité</span><strong>-{{ order.discount }} DH</strong></div>
         {% endif %}
-        <div class="summary-row"><span>Paiement</span><span class="badge badge-{{ order.payment_status }}">{{ order.get_payment_status_display }}</span></div>
+        <div class="summary-row">
+            <span>Paiement</span>
+            <span class="badge badge-{{ order.payment_status }}">{{ order.payment_state_label }}</span>
+        </div>
         <div class="summary-row summary-total"><span>Total</span><strong>{{ order.total }} DH</strong></div>
-        <a href="{% url 'orders:order_pdf' order.id %}" class="btn btn-secondary">
-            <i class="fas fa-file-pdf"></i> Telecharger le PDF
-        </a>
-        {% if order.payment_status != 'paid' %}
-            <a href="{% url 'orders:order_payment' order.id %}" class="btn btn-primary">
-                <i class="fas fa-credit-card"></i> Payer avec Stripe
+        <p class="summary-hint">{{ order.payment_state_hint }}</p>
+        <div class="summary-actions">
+            <a href="{% url 'orders:order_pdf' order.id %}" class="btn btn-secondary">
+                <i class="fas fa-file-pdf"></i> Télécharger le PDF
             </a>
-        {% endif %}
+            {% if order.is_payable %}
+                <a href="{% url 'orders:order_payment' order.id %}" class="btn btn-primary">
+                    <i class="fas fa-credit-card"></i> Payer avec Stripe
+                </a>
+            {% endif %}
+        </div>
     </aside>
 </div>
 {% endblock %}

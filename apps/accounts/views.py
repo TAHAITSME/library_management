@@ -136,6 +136,7 @@ def profile_edit_view(request):
         form = ProfileForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
+            request.user.refresh_from_db()
             messages.success(request, 'Profil mis à jour avec succès.')
             return redirect('accounts:profile')
     else:

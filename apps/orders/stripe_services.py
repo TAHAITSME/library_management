@@ -41,20 +41,26 @@ def money_to_minor_units(amount):
 
 def create_checkout_session(request, order):
     stripe = get_stripe()
-    line_items = []
+    item_count = sum(item.quantity for item in order.items.all())
+    description_parts = [
+        f'{item.book.title} x{item.quantity}'
+        for item in order.items.select_related('book')
+    ]
+    description_parts.append(f'Livraison: {order.shipping_cost} DH')
+    if order.discount:
+        description_parts.append(f'Remise: -{order.discount} DH')
 
-    for item in order.items.select_related('book'):
-        line_items.append({
-            'price_data': {
-                'currency': settings.STRIPE_CURRENCY,
-                'product_data': {
-                    'name': item.book.title,
-                    'description': f'ISBN: {item.book.isbn}',
-                },
-                'unit_amount': money_to_minor_units(item.price),
+    line_items = [{
+        'price_data': {
+            'currency': settings.STRIPE_CURRENCY,
+            'product_data': {
+                'name': f'Commande {order.order_number}',
+                'description': ' | '.join(description_parts)[:1000],
             },
-            'quantity': item.quantity,
-        })
+            'unit_amount': money_to_minor_units(order.total),
+        },
+        'quantity': 1,
+    }]
 
     success_url = request.build_absolute_uri(
         reverse('orders:stripe_success', kwargs={'order_id': order.id})
@@ -75,18 +81,25 @@ def create_checkout_session(request, order):
             'order_id': str(order.id),
             'user_id': str(order.user_id),
             'order_number': order.order_number,
+            'order_total': str(order.total),
+            'item_count': str(item_count),
         },
         payment_intent_data={
             'metadata': {
                 'order_id': str(order.id),
                 'user_id': str(order.user_id),
                 'order_number': order.order_number,
+                'order_total': str(order.total),
             },
         },
     )
 
     order.stripe_checkout_session_id = session.id
-    order.save(update_fields=['stripe_checkout_session_id', 'updated_at'])
+    if order.payment_status == 'failed':
+        order.payment_status = 'pending'
+        order.save(update_fields=['stripe_checkout_session_id', 'payment_status', 'updated_at'])
+    else:
+        order.save(update_fields=['stripe_checkout_session_id', 'updated_at'])
 
     Payment.objects.update_or_create(
         order=order,
@@ -160,7 +173,8 @@ def mark_order_paid_from_checkout_session(session):
             book.save(update_fields=['available_copies', 'status', 'updated_at'])
 
     order.payment_status = 'paid'
-    order.status = 'processing'
+    if order.status == 'pending':
+        order.status = 'processing'
     order.stripe_checkout_session_id = session.get('id', order.stripe_checkout_session_id)
     order.save(update_fields=['payment_status', 'status', 'stripe_checkout_session_id', 'updated_at'])
 
@@ -184,7 +198,7 @@ def mark_order_payment_failed_from_checkout_session(session):
         return None
 
     order = Order.objects.select_for_update().get(id=order_id)
-    if order.payment_status != 'paid':
+    if order.payment_status != 'paid' and order.status != 'cancelled':
         order.payment_status = 'failed'
         order.save(update_fields=['payment_status', 'updated_at'])
 

@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}Paiement emprunt | BiblioNUM{% endblock %}
+
+{% block extra_css %}
+<style>
+  .borrow-pay {
+    max-width: 1040px;
+    margin-inline: auto;
+  }
+
+  .borrow-pay__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .borrow-pay__card,
+  .borrow-pay__summary {
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-lg);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .borrow-pay__card {
+    display: grid;
+    gap: 18px;
+    padding: 22px;
+  }
+
+  .borrow-pay__title {
+    display: grid;
+    gap: 6px;
+  }
+
+  .borrow-pay__title h2 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+
+  .borrow-pay__title p,
+  .borrow-pay__note,
+  .borrow-pay__summary p {
+    margin: 0;
+    color: var(--app-muted);
+    line-height: 1.55;
+  }
+
+  .borrow-pay__amount {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    background: var(--app-surface-soft);
+  }
+
+  .borrow-pay__amount span {
+    color: var(--app-muted);
+    font-size: .82rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .borrow-pay__amount strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 1.7rem;
+    line-height: 1;
+  }
+
+  .borrow-pay__date {
+    text-align: right;
+  }
+
+  .borrow-pay__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .borrow-pay__actions .btn {
+    min-height: 44px;
+  }
+
+  .borrow-pay__note {
+    padding-top: 12px;
+    border-top: 1px solid var(--app-border);
+    font-size: .9rem;
+  }
+
+  .borrow-pay__summary {
+    position: sticky;
+    top: 88px;
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .borrow-pay__summary h2 {
+    margin: 0;
+    font-size: 1.15rem;
+  }
+
+  .borrow-pay__line,
+  .borrow-pay__total {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-block: 10px;
+    border-bottom: 1px solid var(--app-border);
+  }
+
+  .borrow-pay__total {
+    border-bottom: 0;
+    font-size: 1.1rem;
+    font-weight: 900;
+  }
+
+  @media (max-width: 860px) {
+    .borrow-pay__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .borrow-pay__summary {
+      position: static;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .borrow-pay__amount,
+    .borrow-pay__actions {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .borrow-pay__date {
+      text-align: left;
+    }
+
+    .borrow-pay__actions .btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="borrow-pay">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Paiement emprunt</p>
+            <h1>{{ book.title }}</h1>
+            <p>{{ book.author }}</p>
+        </div>
+        <a href="{% url 'catalog:book_detail' book.slug %}" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Retour</a>
+    </header>
+
+    <div class="borrow-pay__grid">
+        <section class="borrow-pay__card">
+            <div class="borrow-pay__title">
+                <h2>Paiement Stripe</h2>
+                <p>Payez les frais d'emprunt pour réserver ce livre pendant 30 jours.</p>
+            </div>
+
+            <div class="borrow-pay__amount">
+                <div>
+                    <span>À payer maintenant</span>
+                    <strong>{{ borrow_fee }} DH</strong>
+                </div>
+                <div class="borrow-pay__date">
+                    <span>Retour avant</span>
+                    <strong>{{ due_date|date:"d/m/Y" }}</strong>
+                </div>
+            </div>
+
+            <form method="post" class="borrow-pay__actions">
+                {% csrf_token %}
+                <a href="{% url 'catalog:book_detail' book.slug %}" class="btn btn-ghost">Annuler</a>
+                <button class="btn btn-primary" type="submit"><i class="fas fa-lock"></i> Payer avec Stripe</button>
+            </form>
+
+            <p class="borrow-pay__note">
+                Remarque: les frais représentent 30% du prix du livre. Si le retour dépasse 30 jours,
+                le montant dû devient {{ late_total }} DH.
+            </p>
+        </section>
+
+        <aside class="borrow-pay__summary">
+            <h2>Résumé</h2>
+            <div class="borrow-pay__line"><span>Prix du livre</span><strong>{{ book.price }} DH</strong></div>
+            <div class="borrow-pay__total"><span>Total</span><strong>{{ borrow_fee }} DH</strong></div>
+            <p>Le stock est réservé uniquement après confirmation du paiement.</p>
+        </aside>
+    </div>
+</div>
+{% endblock %}
