@@ -18,6 +18,7 @@ urlpatterns = [
     path('borrowing/', include('apps.borrowing.urls')),
     path('reservations/', include('apps.reservations.urls')),
     path('dashboard/', include('apps.dashboard.urls')),
+    path('chatbot/', include('apps.chatbot.urls')),
 ]
 
 if settings.DEBUG:

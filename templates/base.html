@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/frontend.css' %}">
+    <link rel="stylesheet" href="{% static 'css/frontend.css' %}?v=2">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -35,7 +35,10 @@
         {% include 'includes/footer.html' %}
     {% endblock %}
 
+    {% include 'chatbot/widget.html' %}
+
     <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/chatbot.js' %}?v=5"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

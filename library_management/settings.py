@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'apps.borrowing',
     'apps.reservations',
     'apps.dashboard',
+    'apps.chatbot',
 ]
 
 # Celery Configuration

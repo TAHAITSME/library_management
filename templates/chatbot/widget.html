@@ -1,0 +1,61 @@
+<section class="chatbot-widget" data-chatbot data-endpoint="{% url 'chatbot:ask' %}" aria-label="Assistant BiblioNUM">
+  <button class="chatbot-toggle" type="button" data-chatbot-toggle aria-label="Ouvrir l'assistant BiblioNUM" aria-expanded="false">
+    <span class="chatbot-toggle__icon"><i class="fas fa-message"></i></span>
+    <span class="chatbot-toggle__text">
+      <strong>Assistant</strong>
+      <small>BiblioNUM</small>
+    </span>
+  </button>
+
+  <div class="chatbot-panel" data-chatbot-panel hidden>
+    <header class="chatbot-header">
+      <div class="chatbot-header__identity">
+        <span class="chatbot-avatar"><i class="fas fa-book-open"></i></span>
+        <div>
+          <strong>Assistant BiblioNUM</strong>
+          <span data-chatbot-status>Disponible pour vous aider</span>
+        </div>
+      </div>
+      <div class="chatbot-header__actions">
+        <button type="button" class="chatbot-icon-button" data-chatbot-clear aria-label="Vider la conversation" title="Vider la conversation">
+          <i class="fas fa-trash-can"></i>
+        </button>
+        <button type="button" class="chatbot-icon-button" data-chatbot-close aria-label="Reduire l'assistant" title="Reduire">
+          <i class="fas fa-minus"></i>
+        </button>
+        <button type="button" class="chatbot-icon-button chatbot-icon-button--close" data-chatbot-close aria-label="Fermer l'assistant" title="Fermer">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="chatbot-messages" data-chatbot-messages aria-live="polite">
+      <div class="chatbot-message chatbot-message--bot" data-chatbot-welcome>
+        Bonjour, je suis l'assistant BiblioNUM. Je peux vous aider a chercher un livre, reserver un ouvrage, suivre vos emprunts, gerer vos commandes ou comprendre le paiement.
+      </div>
+    </div>
+
+    <div class="chatbot-suggestions" data-chatbot-suggestions>
+      <button type="button" data-chatbot-prompt="ouvrir le catalogue">Catalogue</button>
+      <button type="button" data-chatbot-prompt="chercher un livre disponible">Chercher un livre</button>
+      <button type="button" data-chatbot-prompt="comment reserver un livre">Reserver un livre</button>
+      <button type="button" data-chatbot-prompt="comment emprunter un livre">Emprunter un livre</button>
+      <button type="button" data-chatbot-prompt="comment retourner un livre">Retourner un livre</button>
+      <button type="button" data-chatbot-prompt="mes commandes">Mes commandes</button>
+      <button type="button" data-chatbot-prompt="mes emprunts">Mes emprunts</button>
+      <button type="button" data-chatbot-prompt="mes reservations">Mes reservations</button>
+      <button type="button" data-chatbot-prompt="comment payer une commande">Paiement</button>
+      <button type="button" data-chatbot-prompt="ouvrir mon panier">Panier</button>
+      <button type="button" data-chatbot-prompt="envoyer une reclamation">Reclamation</button>
+      <button type="button" data-chatbot-prompt="aide generale">Aide generale</button>
+    </div>
+
+    <form class="chatbot-form" data-chatbot-form action="" onsubmit="return false;" novalidate>
+      {% csrf_token %}
+      <input type="text" name="message" data-chatbot-input placeholder="Ecrivez votre question..." autocomplete="off" maxlength="500">
+      <button type="submit" aria-label="Envoyer">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </form>
+  </div>
+</section>
