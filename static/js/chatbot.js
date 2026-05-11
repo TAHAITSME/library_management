@@ -20,15 +20,15 @@
   const DEFAULT_SUGGESTIONS = [
     'Catalogue',
     'Chercher un livre',
-    'Reserver un livre',
+    'Réserver un livre',
     'Emprunter un livre',
     'Retourner un livre',
     'Mes commandes',
     'Mes emprunts',
-    'Mes reservations',
+    'Mes réservations',
     'Paiement',
-    'Reclamation',
-    'Aide generale'
+    'Réclamation',
+    'Aide générale'
   ];
 
   let history = [];
@@ -105,9 +105,15 @@
     form.classList.toggle('is-sending', isSending);
     input.disabled = isSending;
     form.querySelector('button').disabled = isSending;
+    updateSubmitState();
     if (status) {
-      status.textContent = isSending ? "Assistant en train d'ecrire..." : 'Disponible pour vous aider';
+      status.textContent = isSending ? "Assistant écrit..." : 'En ligne';
     }
+  }
+
+  function updateSubmitState() {
+    const submit = form.querySelector('button');
+    submit.disabled = sending || !input.value.trim();
   }
 
   function addPlainMessage(text, type, shouldRemember = true) {
@@ -125,12 +131,22 @@
   }
 
   function formatText(text) {
-    const paragraphs = String(text || '')
+    const prepared = prepareMessageText(text);
+    const paragraphs = prepared
       .split(/\n+/)
       .map(part => part.trim())
       .filter(Boolean);
     if (!paragraphs.length) return '';
     return paragraphs.map(part => `<p>${escapeHtml(part)}</p>`).join('');
+  }
+
+  function prepareMessageText(text) {
+    return String(text || '')
+      .replace(/\s+(?=Pour commencer avec BiblioNUM\s*:)/g, '\n\n')
+      .replace(/\s+(?=\d+\.\s)/g, '\n')
+      .replace(/\s+(?=Vous voulez que)/g, '\n\n')
+      .replace(/\s+(?=Si le livre)/g, '\n\n')
+      .trim();
   }
 
   function normalizeList(items) {
@@ -139,7 +155,7 @@
 
   function renderRichMessage(data, shouldRemember = true) {
     const safeData = {
-      answer: data?.answer || "Je peux vous aider avec la recherche d'un livre, une reservation, un emprunt, une commande ou un paiement.",
+      answer: data?.answer || "Je peux vous aider avec la recherche d'un livre, une réservation, un emprunt, une commande ou un paiement.",
       results: normalizeList(data?.results),
       actions: normalizeList(data?.actions),
       suggestions: normalizeList(data?.suggestions)
@@ -154,7 +170,7 @@
           ${item.cover ? `<img src="${escapeHtml(item.cover)}" alt="">` : '<i class="fas fa-book"></i>'}
         </span>
         <span class="chatbot-result__body">
-          <strong>${escapeHtml(item.title || 'Resultat')}</strong>
+          <strong>${escapeHtml(item.title || 'Résultat')}</strong>
           ${item.meta ? `<small>${escapeHtml(item.meta)}</small>` : ''}
           ${item.detail ? `<em>${escapeHtml(item.detail)}</em>` : ''}
         </span>
@@ -195,8 +211,8 @@
   function showTyping() {
     const loading = document.createElement('div');
     loading.className = 'chatbot-message chatbot-message--bot chatbot-typing';
-    loading.setAttribute('aria-label', "Assistant en train d'ecrire");
-    loading.innerHTML = "<em>Assistant en train d'ecrire</em><span></span><span></span><span></span>";
+    loading.setAttribute('aria-label', "Assistant écrit");
+    loading.innerHTML = "<em>Assistant écrit</em><span></span><span></span><span></span>";
     messages.appendChild(loading);
     scrollToBottom();
     return loading;
@@ -208,7 +224,7 @@
       return response.json();
     }
     return {
-      answer: "Le serveur a retourne une reponse inattendue. Reessayez dans un moment.",
+      answer: "Une erreur est survenue. Veuillez réessayer.",
       results: [],
       actions: [],
       suggestions: DEFAULT_SUGGESTIONS
@@ -240,7 +256,7 @@
 
       if (!response.ok) {
         renderRichMessage({
-          answer: data.answer || "Je n'ai pas pu traiter cette demande.",
+          answer: data.answer || "Une erreur est survenue. Veuillez réessayer.",
           results: [],
           actions: data.actions || [],
           suggestions: data.suggestions || DEFAULT_SUGGESTIONS
@@ -252,7 +268,7 @@
     } catch (error) {
       loading.remove();
       renderRichMessage({
-        answer: "Impossible de joindre l'assistant pour le moment. Verifiez que le serveur Django est lance, puis reessayez.",
+        answer: "Une erreur est survenue. Veuillez réessayer.",
         results: [],
         actions: [],
         suggestions: DEFAULT_SUGGESTIONS
@@ -286,7 +302,7 @@
     saveHistory();
     messages.innerHTML = '';
     addPlainMessage(
-      'Conversation videe. Je peux vous aider avec le catalogue, les reservations, les emprunts, le panier, les commandes ou le paiement.',
+      'Conversation vidée. Je peux vous aider avec le catalogue, les réservations, les emprunts, le panier, les commandes ou le paiement.',
       'bot',
       false
     );
@@ -320,6 +336,8 @@
     }
   });
 
+  input.addEventListener('input', updateSubmitState);
+
   suggestions.addEventListener('click', event => {
     const button = event.target.closest('[data-chatbot-prompt]');
     if (!button) return;
@@ -328,4 +346,5 @@
   });
 
   restoreHistory();
+  updateSubmitState();
 })();

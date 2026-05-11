@@ -1,10 +1,13 @@
 from decimal import Decimal
+import json
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.catalog.models import Author, Book, Category
+from apps.chatbot.ai import _build_payload, _generate_with_http
 from apps.orders.models import Order
 
 
@@ -144,7 +147,7 @@ class ChatbotTests(TestCase):
         for message in variants:
             response = self.ask(message)
             self.assertEqual(response.status_code, 200)
-            self.assertIn('bouton Reserver', response.json()['answer'])
+            self.assertIn('Réserver', response.json()['answer'])
 
     def test_answers_invoice_stock_and_unknown_helpfully(self):
         invoice_response = self.ask('ou trouver ma facture')
@@ -170,7 +173,7 @@ class ChatbotTests(TestCase):
 
         reservation = self.ask('faire une reservation')
         self.assertEqual(reservation.status_code, 200)
-        self.assertIn('Mes reservations', reservation.json()['answer'])
+        self.assertIn('Mes réservations', reservation.json()['answer'])
 
         unavailable = self.ask("et si le livre n'est pas disponible ?")
         self.assertEqual(unavailable.status_code, 200)
@@ -189,5 +192,120 @@ class ChatbotTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertIn('Pouvez-vous preciser', payload['answer'])
+        self.assertIn('Pouvez-vous préciser', payload['answer'])
         self.assertIn('Paiement', payload['suggestions'])
+
+    @override_settings(CHATBOT_MODE='local')
+    @patch('apps.chatbot.services.generate_ai_response')
+    def test_local_mode_never_calls_ai(self, mocked_ai):
+        response = self.ask('question completement nouvelle hors base')
+
+        self.assertEqual(response.status_code, 200)
+        mocked_ai.assert_not_called()
+        self.assertIn('Je peux vous aider', response.json()['answer'])
+
+    @override_settings(CHATBOT_MODE='hybrid')
+    @patch('apps.chatbot.services.generate_ai_response', return_value='Reponse IA courte adaptee a BiblioNUM.')
+    def test_hybrid_mode_uses_ai_for_low_confidence(self, mocked_ai):
+        response = self.ask('question completement nouvelle hors base')
+
+        self.assertEqual(response.status_code, 200)
+        mocked_ai.assert_called_once()
+        self.assertEqual(response.json()['answer'], 'Reponse IA courte adaptee a BiblioNUM.')
+
+    @override_settings(CHATBOT_MODE='hybrid')
+    @patch('apps.chatbot.services.generate_ai_response')
+    def test_hybrid_mode_keeps_clear_local_intent(self, mocked_ai):
+        response = self.ask('comment reserver un livre')
+
+        self.assertEqual(response.status_code, 200)
+        mocked_ai.assert_not_called()
+        self.assertIn('Réserver', response.json()['answer'])
+
+    @override_settings(CHATBOT_MODE='ai')
+    @patch('apps.chatbot.services.generate_ai_response', return_value='Reponse IA directe.')
+    def test_ai_mode_uses_ai_directly(self, mocked_ai):
+        response = self.ask('comment reserver un livre')
+
+        self.assertEqual(response.status_code, 200)
+        mocked_ai.assert_called_once()
+        self.assertEqual(response.json()['answer'], 'Reponse IA directe.')
+
+    @override_settings(CHATBOT_MODEL='gpt-4.1-mini')
+    def test_ai_payload_uses_biblionum_context_and_user_message(self):
+        payload = _build_payload('Comment payer ?', {'intent': 'payment', 'last_message': 'je veux payer'})
+
+        self.assertEqual(payload['model'], 'gpt-4.1-mini')
+        self.assertIn('BiblioNUM', payload['instructions'])
+        self.assertIn("fonctionnalite", payload['instructions'])
+        self.assertIn('Comment payer ?', payload['input'][0]['content'])
+        self.assertIn('payment', payload['input'][0]['content'])
+
+    @override_settings(OPENAI_API_KEY='sk-test', CHATBOT_MODEL='gpt-4.1-mini')
+    @patch('apps.chatbot.ai.request.urlopen')
+    @patch('apps.chatbot.ai.request.Request')
+    def test_http_fallback_uses_expected_openai_request(self, mocked_request, mocked_urlopen):
+        class FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def read(self):
+                return json.dumps({
+                    'output': [
+                        {'content': [{'type': 'output_text', 'text': 'Reponse IA HTTP.'}]}
+                    ]
+                }).encode('utf-8')
+
+        mocked_urlopen.return_value = FakeResponse()
+        mocked_request.return_value = object()
+        payload = _build_payload('Question inconnue', {'intent': 'unknown'})
+
+        answer = _generate_with_http(payload)
+
+        self.assertEqual(answer, 'Reponse IA HTTP.')
+        args, kwargs = mocked_request.call_args
+        self.assertEqual(args[0], 'https://api.openai.com/v1/responses')
+        self.assertEqual(kwargs['method'], 'POST')
+        self.assertEqual(kwargs['headers']['Authorization'], 'Bearer sk-test')
+        self.assertEqual(kwargs['headers']['Content-Type'], 'application/json')
+        body = json.loads(kwargs['data'].decode('utf-8'))
+        self.assertEqual(body['model'], 'gpt-4.1-mini')
+        self.assertIn('BiblioNUM', body['instructions'])
+        self.assertIn('Question inconnue', body['input'][0]['content'])
+
+    @override_settings(CHATBOT_MODE='hybrid')
+    @patch('apps.chatbot.services.generate_ai_response', return_value='Reponse IA courte adaptee a BiblioNUM.')
+    def test_hybrid_logs_ai_source(self, mocked_ai):
+        with self.assertLogs('apps.chatbot.services', level='INFO') as captured:
+            response = self.ask('question completement nouvelle hors base')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('source=ai', '\n'.join(captured.output))
+        self.assertNotIn('sk-', '\n'.join(captured.output))
+
+    @override_settings(CHATBOT_MODE='hybrid')
+    @patch('apps.chatbot.services.generate_ai_response')
+    def test_general_help_is_practical_step_by_step(self, mocked_ai):
+        response = self.ask("Je suis perdu, je veux utiliser l'application mais je ne sais pas par où commencer.")
+
+        self.assertEqual(response.status_code, 200)
+        mocked_ai.assert_not_called()
+        payload = response.json()
+        self.assertIn('Pas de problème', payload['answer'])
+        self.assertIn('1. Consultez le catalogue', payload['answer'])
+        self.assertIn('réservations', payload['answer'])
+
+    @override_settings(CHATBOT_MODE='hybrid', DEBUG=True)
+    @patch('apps.chatbot.services.generate_ai_response')
+    @patch('builtins.print')
+    def test_chatbot_prints_debug_line_in_development(self, mocked_print, mocked_ai):
+        response = self.ask('comment reserver un livre')
+
+        self.assertEqual(response.status_code, 200)
+        mocked_ai.assert_not_called()
+        printed = ' '.join(str(call.args[0]) for call in mocked_print.call_args_list if call.args)
+        self.assertIn('[CHATBOT] mode=hybrid source=local', printed)
+        self.assertIn('model=gpt-4.1-mini', printed)

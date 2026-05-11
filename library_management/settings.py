@@ -95,6 +95,13 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_CURRENCY = os.getenv('STRIPE_CURRENCY', 'mad').lower()
 
+# Chatbot IA
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+CHATBOT_MODE = os.getenv('CHATBOT_MODE', 'local').lower()
+CHATBOT_MODEL = os.getenv('CHATBOT_MODEL', 'gpt-4.1-mini')
+CHATBOT_AI_MAX_INPUT = int(os.getenv('CHATBOT_AI_MAX_INPUT', '500'))
+CHATBOT_AI_MAX_OUTPUT = int(os.getenv('CHATBOT_AI_MAX_OUTPUT', '220'))
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -190,6 +197,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# Logging development
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '%(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'apps.chatbot': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
 
 # CSRF Configuration
 CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS

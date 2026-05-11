@@ -1,8 +1,10 @@
 import re
 import unicodedata
+import logging
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.db.models import Q
 from django.urls import reverse
 
@@ -11,7 +13,11 @@ from apps.catalog.models import Author, Book, Category
 from apps.orders.models import Order
 from apps.reservations.models import Reservation
 
+from .ai import generate_ai_response
 from .intents import CLARIFICATIONS, DEFAULT_SUGGESTIONS, FOLLOW_UP_PATTERNS, INTENT_KNOWLEDGE, VAGUE_PROBLEM_TERMS
+
+
+logger = logging.getLogger(__name__)
 
 
 class LibraryAssistant:
@@ -19,6 +25,7 @@ class LibraryAssistant:
 
     MAX_RESULTS = 5
     CONTEXT_KEY = 'chatbot_context'
+    LOCAL_CONFIDENCE_THRESHOLD = 3
 
     INTENTS = {
         name: tuple(data.get('keywords', ())) + tuple(data.get('phrases', ()))
@@ -127,7 +134,26 @@ class LibraryAssistant:
         self.message = raw_message.strip()
         self.normalized = self._normalize(self.message)
         self.tokens = re.findall(r'[a-z0-9]+', self.normalized)
+        self.mode = self._chatbot_mode()
+        self.response_source = 'local'
+        self.detected_intent = ''
+        self.detected_score = None
 
+        if self.mode == 'ai':
+            response = self._ai_answer()
+            if not response:
+                self.response_source = 'fallback'
+                response = self._local_answer()
+            self._log_response_source()
+            return response
+
+        response = self._local_answer()
+        self._log_response_source()
+        return response
+
+    def _local_answer(self):
+        if self.response_source not in ('ai', 'fallback'):
+            self.response_source = 'local'
         if self._is_too_short():
             return self._clarify()
 
@@ -143,11 +169,24 @@ class LibraryAssistant:
         if follow_up:
             return follow_up
 
+        guided_help = self._guided_help_answer()
+        if guided_help:
+            return guided_help
+
         business = self._business_topic_answer()
         if business:
             return business
 
-        intent = self._detect_intent()
+        intent, score = self._detect_intent_with_score()
+        self.detected_intent = intent
+        self.detected_score = score
+        if self.mode == 'hybrid' and self._should_use_ai(intent, score):
+            ai_response = self._ai_answer()
+            if ai_response:
+                return ai_response
+            self.response_source = 'fallback'
+            return self._unknown_answer()
+
         if intent == 'greeting':
             return self._remember('greeting', self._knowledge_answer('greeting'))
         if intent == 'help':
@@ -198,6 +237,72 @@ class LibraryAssistant:
             return self._unknown_answer()
         return self._catalog_search()
 
+    def _chatbot_mode(self):
+        mode = getattr(settings, 'CHATBOT_MODE', 'local').lower()
+        return mode if mode in ('local', 'hybrid', 'ai') else 'local'
+
+    def _should_use_ai(self, intent, score):
+        if intent == 'unknown':
+            return True
+        if intent in ('catalog', 'book_search') and self._looks_like_precise_catalog_request():
+            return False
+        if intent in ('reservation', 'payment', 'borrow', 'return', 'cart', 'order', 'invoice', 'complaint', 'account', 'stock'):
+            return score < self.LOCAL_CONFIDENCE_THRESHOLD
+        if score < self.LOCAL_CONFIDENCE_THRESHOLD:
+            return True
+        if intent == 'help' and self._matches('pourquoi', 'difference', 'conseil', 'explique moi', 'question'):
+            return True
+        return False
+
+    def _ai_answer(self):
+        answer = generate_ai_response(self.message, self.context)
+        if not answer:
+            return None
+        self.response_source = 'ai'
+        response = {
+            'answer': answer,
+            'results': [],
+            'actions': self._common_actions(),
+            'suggestions': DEFAULT_SUGGESTIONS,
+        }
+        self._save_context('ai', {'last_local_intent': self.context.get('intent')})
+        return response
+
+    def _log_response_source(self):
+        line = (
+            f"[CHATBOT] mode={self.mode} source={self.response_source} "
+            f"intent={self.detected_intent or self.context.get('intent', '')} "
+            f"score={self.detected_score} model={getattr(settings, 'CHATBOT_MODEL', '')}"
+        )
+        logger.info(
+            '%s api_key_configured=%s',
+            line,
+            bool(getattr(settings, 'OPENAI_API_KEY', '') and getattr(settings, 'OPENAI_API_KEY', '') != 'sk-xxx'),
+        )
+        if getattr(settings, 'DEBUG', False):
+            print(line)
+
+    def _local_trace(self, source='local'):
+        self.response_source = source
+        return None
+
+    def _mark_local(self):
+        self.response_source = 'local'
+        return None
+
+    def _trace_response(self, response, source):
+        self.response_source = source
+        return response
+
+    def _log_detected_intent(self, intent, score):
+        logger.debug(
+            '[CHATBOT] detected intent=%s score=%s mode=%s model=%s',
+            intent,
+            score,
+            self.mode,
+            getattr(settings, 'CHATBOT_MODEL', ''),
+        )
+
     def _is_catalog_follow_up_query(self):
         return bool(
             self.context.get('intent') == 'catalog'
@@ -214,6 +319,22 @@ class LibraryAssistant:
             'results': [],
             'actions': self._actions_for_intent(intent),
         }, intent)
+
+    def _guided_help_answer(self):
+        if self._matches(
+            'je suis perdu',
+            'perdu',
+            'par ou commencer',
+            'par où commencer',
+            'je ne sais pas',
+            'aide moi',
+            'comment utiliser',
+            'explique moi la plateforme',
+        ):
+            self.detected_intent = 'help'
+            self.detected_score = 10
+            return self._remember('help', self._knowledge_answer('help'))
+        return None
 
     def _clarification_answer(self):
         if self._matches('ca ne marche pas', 'ne fonctionne pas', 'marche pas', 'bloque', 'impossible') and not self._has_domain_hint():
@@ -575,11 +696,12 @@ class LibraryAssistant:
 
         return self._with_suggestions({
             'answer': (
-                "Pour reserver un livre, ouvrez le detail du livre depuis le catalogue, puis cliquez sur le bouton Reserver. "
-                "Si le livre est disponible ou si une file d'attente existe, votre reservation est enregistree et vous pouvez suivre son etat dans Mes reservations."
+                "Pour réserver un livre, ouvrez le catalogue, choisissez le livre souhaité, puis cliquez sur Réserver "
+                "depuis sa page de détail. Une fois la réservation enregistrée, vous pouvez suivre son état dans Mes réservations. "
+                "Si le livre n'est pas disponible, votre demande peut être placée en attente selon les règles de la bibliothèque."
             ),
             'results': [],
-            'actions': [{'label': 'Voir mes reservations', 'url': reverse('reservations:list')}, {'label': 'Catalogue', 'url': reverse('catalog:books_list')}],
+            'actions': [{'label': 'Voir mes réservations', 'url': reverse('reservations:list')}, {'label': 'Catalogue', 'url': reverse('catalog:books_list')}],
         }, 'reservation')
 
     def _account_answer(self):
@@ -1000,6 +1122,9 @@ class LibraryAssistant:
         return ''
 
     def _detect_intent(self):
+        return self._detect_intent_with_score()[0]
+
+    def _detect_intent_with_score(self):
         scores = {intent: 0 for intent in self.INTENTS}
         for intent, data in INTENT_KNOWLEDGE.items():
             for phrase in data.get('phrases', ()):
@@ -1031,8 +1156,8 @@ class LibraryAssistant:
 
         best_intent, best_score = max(scores.items(), key=lambda item: item[1])
         if best_score < 2:
-            return 'unknown'
-        return best_intent
+            return 'unknown', best_score
+        return best_intent, best_score
 
     def _is_follow_up(self):
         return bool(
@@ -1081,8 +1206,8 @@ class LibraryAssistant:
     def _unknown_answer(self):
         return self._with_suggestions({
             'answer': (
-                "Je peux vous aider avec la recherche d'un livre, une reservation, un emprunt, une commande, "
-                "un paiement, une facture ou une reclamation. Choisissez un raccourci ci-dessous ou reformulez en quelques mots."
+                "Je peux vous aider avec la recherche d'un livre, une réservation, un emprunt, une commande, "
+                "un paiement, une facture ou une réclamation. Choisissez un raccourci ci-dessous ou reformulez en quelques mots."
             ),
             'results': [],
             'actions': self._common_actions(),

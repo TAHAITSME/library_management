@@ -7,10 +7,10 @@ La logique metier et les liens restent dans services.py.
 
 DEFAULT_SUGGESTIONS = [
     'Chercher un livre',
-    'Reserver un livre',
+    'Réserver un livre',
     'Mes emprunts',
     'Paiement',
-    'Reclamation',
+    'Réclamation',
 ]
 
 VAGUE_PROBLEM_TERMS = (
@@ -70,30 +70,30 @@ FOLLOW_UP_PATTERNS = {
 CLARIFICATIONS = {
     'problem': {
         'answer': (
-            "Je peux vous aider. Le probleme concerne plutot un livre, une reservation, "
+            "Je peux vous aider. Le problème concerne plutôt un livre, une réservation, "
             "un emprunt, une commande, un paiement, le panier ou votre compte ?"
         ),
-        'suggestions': ['Chercher un livre', 'Reserver un livre', 'Paiement', 'Panier', 'Reclamation'],
+        'suggestions': ['Chercher un livre', 'Réserver un livre', 'Paiement', 'Panier', 'Réclamation'],
     },
     'broken': {
         'answer': (
-            "D'accord. Pouvez-vous preciser ce qui ne marche pas : la recherche de livre, "
-            "la reservation, le paiement, la connexion ou le panier ?"
+            "D'accord. Pouvez-vous préciser ce qui ne marche pas : la recherche de livre, "
+            "la réservation, le paiement, la connexion ou le panier ?"
         ),
-        'suggestions': ['Recherche de livre', 'Reservation', 'Paiement', 'Connexion', 'Panier'],
+        'suggestions': ['Recherche de livre', 'Réservation', 'Paiement', 'Connexion', 'Panier'],
     },
     'short': {
         'answer': (
-            "Je n'ai pas assez d'information pour repondre correctement. Vous pouvez me dire "
-            "si vous voulez chercher un livre, reserver, emprunter, payer ou envoyer une reclamation ?"
+            "Je n'ai pas assez d'information pour répondre correctement. Vous pouvez me dire "
+            "si vous voulez chercher un livre, réserver, emprunter, payer ou envoyer une réclamation ?"
         ),
         'suggestions': DEFAULT_SUGGESTIONS,
     },
     'unknown': {
         'answer': (
             "Je n'ai pas bien compris votre demande, mais je peux vous aider avec la recherche "
-            "d'un livre, une reservation, un emprunt, une commande, un paiement ou une reclamation. "
-            "Pouvez-vous preciser ce que vous voulez faire ?"
+            "d'un livre, une réservation, un emprunt, une commande, un paiement ou une réclamation. "
+            "Pouvez-vous préciser ce que vous voulez faire ?"
         ),
         'suggestions': DEFAULT_SUGGESTIONS,
     },
@@ -110,14 +110,19 @@ INTENT_KNOWLEDGE = {
         'suggestions': ['Catalogue', 'Chercher un livre', 'Reserver un livre', 'Paiement'],
     },
     'help': {
-        'keywords': ('aide', 'quoi faire', 'tu peux', 'guide', 'comment utiliser', 'fonctionne', 'assistant'),
-        'phrases': ('que peux tu faire', 'aide moi', 'comment utiliser le site'),
+        'keywords': ('aide', 'perdu', 'commencer', 'quoi faire', 'tu peux', 'guide', 'comment utiliser', 'fonctionne', 'assistant', 'plateforme'),
+        'phrases': ('que peux tu faire', 'aide moi', 'comment utiliser le site', 'je suis perdu', 'je ne sais pas par ou commencer', 'je ne sais pas par où commencer', 'explique moi la plateforme'),
         'answer': (
-            "Je peux vous guider dans BiblioNUM: consulter le catalogue, chercher un livre, "
-            "reserver ou emprunter un ouvrage, gerer le panier, suivre une commande, payer, "
-            "consulter une facture ou envoyer une reclamation."
+            "Pas de problème, je vais vous guider.\n\n"
+            "Pour commencer avec BiblioNUM :\n"
+            "1. Consultez le catalogue.\n"
+            "2. Recherchez un livre par titre, auteur ou catégorie.\n"
+            "3. Ouvrez la page du livre.\n"
+            "4. Réservez, empruntez ou ajoutez au panier selon la disponibilité.\n"
+            "5. Suivez vos commandes, emprunts et réservations depuis votre espace utilisateur.\n\n"
+            "Vous voulez que je vous aide à chercher un livre, réserver un livre ou consulter vos emprunts ?"
         ),
-        'suggestions': ['Catalogue', 'Reserver un livre', 'Emprunter un livre', 'Paiement', 'Reclamation'],
+        'suggestions': ['Catalogue', 'Chercher un livre', 'Réserver un livre', 'Mes emprunts', 'Paiement'],
     },
     'catalog': {
         'keywords': ('catalogue', 'liste livres', 'tous les livres', 'rayon', 'bibliotheque', 'ouvrages'),
@@ -153,11 +158,11 @@ INTENT_KNOWLEDGE = {
         'keywords': ('reservation', 'reserver', 'reserve', 'garder', 'mettre en attente', 'file attente', 'place'),
         'phrases': ('comment reserver un livre', 'je veux reserver', 'garder un livre', 'faire une reservation', 'mettre un livre en attente'),
         'answer': (
-            "Pour reserver un livre, ouvrez d'abord le catalogue, choisissez le livre souhaite, puis cliquez sur "
-            "le bouton Reserver depuis la page de detail. Ensuite, vous pourrez suivre l'etat de votre reservation "
-            "dans la section Mes reservations."
+            "Pour réserver un livre, ouvrez le catalogue, choisissez le livre souhaité, puis cliquez sur Réserver "
+            "depuis sa page de détail. Une fois la réservation enregistrée, vous pouvez suivre son état dans Mes réservations. "
+            "Si le livre n'est pas disponible, votre demande peut être placée en attente selon les règles de la bibliothèque."
         ),
-        'suggestions': ['Mes reservations', 'Livre indisponible', 'Annuler une reservation', 'Catalogue'],
+        'suggestions': ['Mes réservations', 'Livre indisponible', 'Annuler une réservation', 'Catalogue'],
     },
     'borrow': {
         'keywords': ('emprunt', 'emprunter', 'prendre un livre', 'pret', 'louer', 'demande emprunt', '30 jours', 'amende', 'retard'),

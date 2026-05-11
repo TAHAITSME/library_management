@@ -5,6 +5,7 @@ asgiref==3.11.1
 tzdata==2025.3
 python-dotenv==1.0.0
 stripe>=10.0.0
+openai>=2.0.0
 mysqlclient==2.2.0
 
 # Optional pour développement

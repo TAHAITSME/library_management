@@ -13,7 +13,7 @@
         <span class="chatbot-avatar"><i class="fas fa-book-open"></i></span>
         <div>
           <strong>Assistant BiblioNUM</strong>
-          <span data-chatbot-status>Disponible pour vous aider</span>
+          <span data-chatbot-status>En ligne</span>
         </div>
       </div>
       <div class="chatbot-header__actions">
@@ -30,29 +30,29 @@
     </header>
 
     <div class="chatbot-messages" data-chatbot-messages aria-live="polite">
-      <div class="chatbot-message chatbot-message--bot" data-chatbot-welcome>
-        Bonjour, je suis l'assistant BiblioNUM. Je peux vous aider a chercher un livre, reserver un ouvrage, suivre vos emprunts, gerer vos commandes ou comprendre le paiement.
+      <div class="chatbot-message chatbot-message--bot chatbot-message--welcome" data-chatbot-welcome>
+        Bonjour, je suis l'assistant BiblioNUM. Je peux vous aider à chercher un livre, réserver un ouvrage, suivre vos emprunts, gérer vos commandes ou comprendre le paiement.
       </div>
     </div>
 
     <div class="chatbot-suggestions" data-chatbot-suggestions>
       <button type="button" data-chatbot-prompt="ouvrir le catalogue">Catalogue</button>
       <button type="button" data-chatbot-prompt="chercher un livre disponible">Chercher un livre</button>
-      <button type="button" data-chatbot-prompt="comment reserver un livre">Reserver un livre</button>
+      <button type="button" data-chatbot-prompt="comment reserver un livre">Réserver un livre</button>
       <button type="button" data-chatbot-prompt="comment emprunter un livre">Emprunter un livre</button>
       <button type="button" data-chatbot-prompt="comment retourner un livre">Retourner un livre</button>
       <button type="button" data-chatbot-prompt="mes commandes">Mes commandes</button>
       <button type="button" data-chatbot-prompt="mes emprunts">Mes emprunts</button>
-      <button type="button" data-chatbot-prompt="mes reservations">Mes reservations</button>
+      <button type="button" data-chatbot-prompt="mes reservations">Mes réservations</button>
       <button type="button" data-chatbot-prompt="comment payer une commande">Paiement</button>
       <button type="button" data-chatbot-prompt="ouvrir mon panier">Panier</button>
-      <button type="button" data-chatbot-prompt="envoyer une reclamation">Reclamation</button>
-      <button type="button" data-chatbot-prompt="aide generale">Aide generale</button>
+      <button type="button" data-chatbot-prompt="envoyer une reclamation">Réclamation</button>
+      <button type="button" data-chatbot-prompt="aide generale">Aide générale</button>
     </div>
 
     <form class="chatbot-form" data-chatbot-form action="" onsubmit="return false;" novalidate>
       {% csrf_token %}
-      <input type="text" name="message" data-chatbot-input placeholder="Ecrivez votre question..." autocomplete="off" maxlength="500">
+      <input type="text" name="message" data-chatbot-input placeholder="Écrivez votre question..." autocomplete="off" maxlength="500">
       <button type="submit" aria-label="Envoyer">
         <i class="fas fa-paper-plane"></i>
       </button>
