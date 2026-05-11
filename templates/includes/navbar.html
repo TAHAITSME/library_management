@@ -35,6 +35,12 @@
             </form>
 
             {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+                <a href="{% url 'accounts:notifications' %}" class="icon-btn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                    {% if unread_notifications_count > 0 %}
+                        <span class="count-badge">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                </a>
                 <a href="{% url 'cart:cart' %}" class="icon-btn" aria-label="Panier">
                     <i class="fas fa-shopping-cart"></i>
                     {% if user.cart %}
@@ -64,6 +70,8 @@
                         {% else %}
                             <a href="{% url 'accounts:account' %}"><i class="fas fa-chart-pie"></i> Espace client</a>
                             <a href="{% url 'accounts:profile' %}"><i class="fas fa-id-card"></i> Profil</a>
+                            <a href="{% url 'accounts:notifications' %}"><i class="fas fa-bell"></i> Notifications</a>
+                            <a href="{% url 'chatbot:conversations' %}"><i class="fas fa-comments"></i> Conversations IA</a>
                         {% endif %}
                         <form method="post" action="{% url 'accounts:logout' %}">
                             {% csrf_token %}

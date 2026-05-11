@@ -3,6 +3,10 @@
 {% block dashboard_title %}Gestion du stock{% endblock %}
 {% block dashboard_actions %}
 <a class="btn btn-ghost" href="{% url 'dashboard:stock' %}?low=1"><i class="fas fa-triangle-exclamation"></i> Stock faible</a>
+<form method="post" action="{% url 'dashboard:stock_export_low' %}">
+    {% csrf_token %}
+    <button class="btn btn-ghost" type="submit"><i class="fas fa-file-csv"></i> Export CSV</button>
+</form>
 {% endblock %}
 
 {% block dashboard_content %}

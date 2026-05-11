@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Conversation chatbot | BiblioNUM{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Chatbot</p>
+        <h1>{{ conversation.title }}</h1>
+        <p>{{ conversation.created_at|date:"d/m/Y H:i" }}</p>
+    </div>
+    <a class="btn btn-ghost" href="{% url 'chatbot:conversations' %}"><i class="fas fa-arrow-left"></i> Retour</a>
+</header>
+
+<section class="line-list">
+    {% for message in conversation.messages.all %}
+        <article class="line-item">
+            <div class="line-item__cover">
+                <i class="fas {% if message.role == 'user' %}fa-user{% else %}fa-robot{% endif %}"></i>
+            </div>
+            <div>
+                <h2>{{ message.get_role_display }}</h2>
+                <p>{{ message.content|linebreaksbr }}</p>
+                <small>{{ message.created_at|date:"d/m/Y H:i" }}</small>
+            </div>
+        </article>
+    {% endfor %}
+</section>
+{% endblock %}

@@ -1,6 +1,12 @@
 {% extends 'dashboard/base.html' %}
 
 {% block dashboard_title %}Emprunts{% endblock %}
+{% block dashboard_actions %}
+<form method="post" action="{% url 'dashboard:borrows_export_overdue' %}">
+    {% csrf_token %}
+    <button class="btn btn-ghost" type="submit"><i class="fas fa-file-csv"></i> Retards CSV</button>
+</form>
+{% endblock %}
 
 {% block dashboard_content %}
 <section class="dashboard-panel">

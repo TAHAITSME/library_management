@@ -1,4 +1,5 @@
 import json
+import csv
 from datetime import timedelta
 
 from django.contrib import messages
@@ -8,6 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, Sum
 from django.db.models.deletion import ProtectedError
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils.dateparse import parse_date
@@ -20,6 +22,8 @@ from apps.catalog.models import Author, Book, Category
 from apps.orders.models import Invoice, Order, OrderItem, Payment
 from apps.reservations.models import Reservation
 from apps.accounts.models import Complaint
+from apps.accounts.utils import notification_url, notify_user
+from apps.reservations.views import create_reservation_notification, refresh_queue_and_notify_next
 
 from .forms import (
     AuthorForm,
@@ -721,14 +725,42 @@ def reservation_action(request, pk, action):
         messages.warning(request, 'Cette reservation ne peut plus etre modifiee.')
         return redirect('dashboard:reservations')
 
-    if action == 'complete':
+    if action == 'ready':
+        create_reservation_notification(
+            reservation,
+            'ready_for_pickup',
+            f'"{reservation.book.title}" est pret a etre recupere.',
+        )
+        messages.success(request, 'Notification de retrait envoyee.')
+        return redirect('dashboard:reservations')
+    elif action == 'expire':
+        reservation.status = 'expired'
+        create_reservation_notification(
+            reservation,
+            'expired',
+            f'Votre reservation pour "{reservation.book.title}" a expire.',
+        )
+    elif action == 'complete':
         reservation.status = 'completed'
         reservation.pickup_date = timezone.now()
+        notify_user(
+            reservation.user,
+            'Reservation terminee',
+            f'Votre reservation pour "{reservation.book.title}" a ete marquee comme recuperee.',
+            'reservation',
+            notification_url('reservations:detail', pk=reservation.pk),
+        )
     elif action == 'cancel':
         reservation.status = 'cancelled'
+        create_reservation_notification(
+            reservation,
+            'cancelled',
+            f'Votre reservation pour "{reservation.book.title}" a ete annulee par l administration.',
+        )
     else:
         raise PermissionDenied
     reservation.save()
+    refresh_queue_and_notify_next(reservation.book)
     messages.success(request, 'Reservation mise a jour.')
     return redirect('dashboard:reservations')
 
@@ -818,3 +850,65 @@ class ComplaintUpdateView(StaffRequiredMixin, DashboardContextMixin, UpdateView)
 
     def get_success_url(self):
         return reverse_lazy('dashboard:complaint_detail', kwargs={'pk': self.object.pk})
+
+
+@require_POST
+def export_orders_csv(request):
+    if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
+        raise PermissionDenied
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="commandes.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Numero', 'Client', 'Statut', 'Paiement', 'Total', 'Date'])
+    for order in Order.objects.select_related('user').order_by('-created_at'):
+        writer.writerow([
+            order.order_number,
+            order.user.email or order.user.username,
+            order.get_status_display(),
+            order.get_payment_status_display(),
+            order.total,
+            order.created_at.strftime('%d/%m/%Y %H:%M'),
+        ])
+    return response
+
+
+@require_POST
+def export_overdue_borrows_csv(request):
+    if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
+        raise PermissionDenied
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="emprunts-retard.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Utilisateur', 'Livre', 'Date retour prevue', 'Jours retard', 'Amende'])
+    for borrow in Borrow.objects.select_related('user', 'book').filter(status__in=['active', 'overdue']):
+        if borrow.is_overdue_now():
+            writer.writerow([
+                borrow.user.email or borrow.user.username,
+                borrow.book.title,
+                borrow.due_date.strftime('%d/%m/%Y'),
+                borrow.get_overdue_days(),
+                borrow.fine_amount,
+            ])
+    return response
+
+
+@require_POST
+def export_low_stock_csv(request):
+    if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
+        raise PermissionDenied
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="stock-faible.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Livre', 'Categorie', 'Stock disponible', 'Stock total', 'Statut'])
+    for book in Book.objects.select_related('category').filter(available_copies__lte=2).order_by('available_copies', 'title'):
+        writer.writerow([
+            book.title,
+            book.category.name if book.category else '',
+            book.available_copies,
+            book.total_copies,
+            book.get_status_display(),
+        ])
+    return response

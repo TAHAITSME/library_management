@@ -1,6 +1,12 @@
 {% extends 'dashboard/base.html' %}
 
 {% block dashboard_title %}Commandes{% endblock %}
+{% block dashboard_actions %}
+<form method="post" action="{% url 'dashboard:orders_export' %}">
+    {% csrf_token %}
+    <button class="btn btn-ghost" type="submit"><i class="fas fa-file-csv"></i> Export CSV</button>
+</form>
+{% endblock %}
 
 {% block dashboard_content %}
 <section class="dashboard-panel">

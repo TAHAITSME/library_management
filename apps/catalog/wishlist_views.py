@@ -58,7 +58,7 @@ def add_to_wishlist(request, book_id):
                 'wishlist_count': wishlist.get_item_count(),
             })
         
-        return redirect('catalog:book_detail', book_id=book_id)
+        return redirect(request.META.get('HTTP_REFERER') or 'catalog:wishlist')
     
     except Exception as e:
         logger.error(f"Error adding to wishlist: {e}")

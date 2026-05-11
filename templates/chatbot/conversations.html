@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Conversations chatbot | BiblioNUM{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Chatbot</p>
+        <h1>Mes conversations</h1>
+        <p>Retrouvez vos derniers echanges avec l'assistant BiblioNUM.</p>
+    </div>
+</header>
+
+{% if conversations %}
+    <section class="line-list">
+        {% for conversation in conversations %}
+            <a class="line-item" href="{% url 'chatbot:conversation_detail' conversation.pk %}">
+                <div class="line-item__cover"><i class="fas fa-comments"></i></div>
+                <div>
+                    <h2>{{ conversation.title }}</h2>
+                    <p>{{ conversation.messages.last.content|truncatechars:130 }}</p>
+                    <small>{{ conversation.updated_at|date:"d/m/Y H:i" }}</small>
+                </div>
+            </a>
+        {% endfor %}
+    </section>
+{% else %}
+    {% include 'components/empty_state.html' with icon='comments' title='Aucune conversation' message='Posez une question au chatbot pour demarrer un historique.' %}
+{% endif %}
+{% endblock %}

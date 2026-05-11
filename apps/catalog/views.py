@@ -1,11 +1,81 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.db.models import Q, Avg, Count
+from django.db.models import Q, Avg, Count, Case, When, Value, IntegerField
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from .models import Book, Category, Author, Review
+from django.urls import reverse
+from .models import Book, Category, Author, Review, WishlistItem
 from .forms import ReviewForm
 from apps.borrowing.models import Borrow
+
+
+BOOK_SEARCH_FIELDS = (
+    'title',
+    'description',
+    'isbn',
+    'author__first_name',
+    'author__last_name',
+    'category__name',
+    'publisher',
+    'language',
+)
+
+
+def _clean_catalog_query(query):
+    return ' '.join((query or '').strip().split())
+
+
+def _book_search_q(term):
+    search_q = Q()
+    for field in BOOK_SEARCH_FIELDS:
+        search_q |= Q(**{f'{field}__icontains': term})
+    return search_q
+
+
+def apply_book_search(queryset, query):
+    cleaned_query = _clean_catalog_query(query)
+    if not cleaned_query:
+        return queryset, ''
+
+    tokens = [token for token in cleaned_query.split() if len(token) > 1][:8]
+    phrase_q = _book_search_q(cleaned_query)
+    token_q = phrase_q
+    if tokens:
+        token_q = Q()
+        for token in tokens:
+            token_q &= _book_search_q(token)
+
+    queryset = queryset.filter(phrase_q | token_q).distinct()
+
+    rank = Case(
+        When(title__iexact=cleaned_query, then=Value(120)),
+        When(isbn__iexact=cleaned_query, then=Value(115)),
+        When(title__istartswith=cleaned_query, then=Value(95)),
+        When(title__icontains=cleaned_query, then=Value(80)),
+        When(isbn__icontains=cleaned_query, then=Value(75)),
+        When(author__last_name__icontains=cleaned_query, then=Value(70)),
+        When(author__first_name__icontains=cleaned_query, then=Value(65)),
+        When(category__name__icontains=cleaned_query, then=Value(45)),
+        When(publisher__icontains=cleaned_query, then=Value(35)),
+        When(description__icontains=cleaned_query, then=Value(20)),
+        default=Value(10),
+        output_field=IntegerField(),
+    )
+
+    return queryset.annotate(search_rank=rank), cleaned_query
+
+
+def serialize_book_result(book):
+    return {
+        'title': book.title,
+        'author': str(book.author),
+        'category': book.category.name if book.category else '',
+        'price': str(book.price),
+        'cover': book.get_cover_image_url(),
+        'url': reverse('catalog:book_detail', args=[book.slug]),
+        'available_copies': book.available_copies,
+    }
 
 
 def get_recommendations_for_user(user, limit=8):
@@ -60,14 +130,7 @@ def books_list_view(request):
     
     # Filtre recherche
     query = request.GET.get('q', request.GET.get('search', ''))
-    if query:
-        books = books.filter(
-            Q(title__icontains=query) |
-            Q(description__icontains=query) |
-            Q(author__first_name__icontains=query) |
-            Q(author__last_name__icontains=query) |
-            Q(isbn__icontains=query)
-        ).distinct()
+    books, query = apply_book_search(books, query)
 
     # Filtre prix
     min_price = request.GET.get('min_price')
@@ -116,8 +179,11 @@ def books_list_view(request):
         books = books.filter(language=language)
 
     # Tri
-    sort = request.GET.get('sort', 'newest')
+    sort = request.GET.get('sort') or ('relevance' if query else 'newest')
+    if sort == 'relevance' and not query:
+        sort = 'newest'
     sort_map = {
+        'relevance': '-search_rank',
         'newest': '-created_at',
         'oldest': 'created_at',
         'title': 'title',
@@ -128,7 +194,10 @@ def books_list_view(request):
         'popular': '-rating',
     }
     order = sort_map.get(sort, '-created_at')
-    books = books.order_by(order)
+    if sort == 'relevance' and query:
+        books = books.order_by(order, '-rating', 'title')
+    else:
+        books = books.order_by(order)
 
     # Pagination
     paginator = Paginator(books, 12)
@@ -154,6 +223,12 @@ def books_list_view(request):
     if 'page' in current_params:
         current_params.pop('page')
 
+    wishlist_book_ids = set()
+    if request.user.is_authenticated and not request.user.is_staff:
+        wishlist_book_ids = set(
+            WishlistItem.objects.filter(wishlist__user=request.user).values_list('book_id', flat=True)
+        )
+
     context = {
         'page_obj': page_obj,
         'books': page_obj.object_list,
@@ -173,6 +248,7 @@ def books_list_view(request):
         'books_count': paginator.count,
         'is_paginated': page_obj.has_other_pages(),
         'current_params': current_params.urlencode(),
+        'wishlist_book_ids': wishlist_book_ids,
     }
     return render(request, 'catalog/books_list.html', context)
 
@@ -203,6 +279,11 @@ def book_detail_view(request, slug):
         'related_books': recommended_books,
         'avg_rating': round(avg_rating, 1),
         'user_review': user_review,
+        'is_in_wishlist': (
+            WishlistItem.objects.filter(wishlist__user=request.user, book=book).exists()
+            if request.user.is_authenticated and not request.user.is_staff
+            else False
+        ),
     }
     return render(request, 'catalog/book_detail.html', context)
 
@@ -230,19 +311,15 @@ def author_books_view(request, author_id):
 
 
 def search_books_view(request):
-    query = request.GET.get('q', '')
+    query = _clean_catalog_query(request.GET.get('q', ''))
     books = Book.objects.none()
 
     if query:
-        books = Book.objects.filter(status='available').filter(
-            Q(title__icontains=query) |
-            Q(description__icontains=query) |
-            Q(isbn__icontains=query) |
-            Q(author__first_name__icontains=query) |
-            Q(author__last_name__icontains=query)
-        ).distinct().select_related('author', 'category')
+        books = Book.objects.filter(status='available').select_related('author', 'category')
+        books, query = apply_book_search(books, query)
 
         sort_map = {
+            'relevance': '-search_rank',
             'newest': '-created_at',
             'oldest': 'created_at',
             'title': 'title',
@@ -251,8 +328,19 @@ def search_books_view(request):
             'rating': '-rating',
             '-created_at': '-created_at',
         }
-        sort = sort_map.get(request.GET.get('sort', 'newest'), '-created_at')
-        books = books.order_by(sort)
+        sort_key = request.GET.get('sort', 'relevance')
+        sort = sort_map.get(sort_key, '-search_rank')
+        if sort_key == 'relevance':
+            books = books.order_by(sort, '-rating', 'title')
+        else:
+            books = books.order_by(sort)
+
+    if request.GET.get('ajax') == '1' or request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'query': query,
+            'count': books.count(),
+            'results': [serialize_book_result(book) for book in books[:8]],
+        })
 
     context = {
         'books': books,

@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from apps.catalog.models import Book
+from apps.accounts.utils import notification_url, notify_user
 
 from .models import Borrow, BorrowRequest
 from .stripe_services import confirm_borrow_checkout_session, create_borrow_checkout_session
@@ -139,6 +140,13 @@ def return_book_view(request, borrow_id):
                 book.save(update_fields=['available_copies', 'status', 'updated_at'])
 
                 messages.success(request, 'Livre retourne avec succes.')
+                notify_user(
+                    request.user,
+                    'Livre retourne',
+                    f'Votre retour de "{borrow.book.title}" a ete enregistre.',
+                    'borrow',
+                    notification_url('borrowing:borrow_detail', borrow.id),
+                )
                 if borrow.fine_amount > 0:
                     messages.warning(
                         request,
@@ -174,6 +182,13 @@ def renew_borrow_view(request, borrow_id):
     borrow.save(update_fields=['due_date'])
 
     messages.success(request, f'Emprunt renouvele. Nouvelle date: {borrow.due_date.strftime("%d/%m/%Y")}.')
+    notify_user(
+        request.user,
+        'Emprunt renouvele',
+        f'Nouvelle date de retour pour "{borrow.book.title}": {borrow.due_date.strftime("%d/%m/%Y")}.',
+        'borrow',
+        notification_url('borrowing:borrow_detail', borrow.id),
+    )
     return redirect('borrowing:borrow_detail', borrow_id=borrow_id)
 
 

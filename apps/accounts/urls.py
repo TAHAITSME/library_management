@@ -18,6 +18,9 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.profile_edit_view, name='profile_edit'),
     path('reclamations/', views.complaint_create_view, name='complaints'),
+    path('notifications/', views.notifications_view, name='notifications'),
+    path('notifications/read-all/', views.mark_all_notifications_read, name='notifications_read_all'),
+    path('notifications/<int:pk>/read/', views.mark_notification_read, name='notification_read'),
 
     path('admin-dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('admin/users/', views.admin_users_list_view, name='admin_users'),

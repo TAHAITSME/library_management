@@ -345,6 +345,13 @@
                     {% else %}
                         <button class="btn btn-secondary" type="button" disabled><i class="fas fa-ban"></i> Indisponible</button>
                     {% endif %}
+                    <form method="post" action="{% url 'catalog:add_to_wishlist' book.id %}">
+                        {% csrf_token %}
+                        <button class="btn btn-ghost" type="submit">
+                            <i class="{% if is_in_wishlist %}fas{% else %}far{% endif %} fa-heart"></i>
+                            {% if is_in_wishlist %}Dans la wishlist{% else %}Ajouter aux favoris{% endif %}
+                        </button>
+                    </form>
                     <form method="post" action="{% url 'reservations:create' book.id %}">
                         {% csrf_token %}
                         <button class="btn btn-ghost" type="submit"><i class="fas fa-bookmark"></i> Reserver</button>

@@ -2668,6 +2668,7 @@ body {
 }
 
 .event-book-card {
+  position: relative;
   min-height: 560px;
   display: flex;
   flex-direction: column;
@@ -2723,6 +2724,27 @@ body {
   font-size: .84rem;
   font-weight: 900;
   box-shadow: 0 10px 24px rgb(22 181 138 / 26%);
+}
+
+.event-book-card__wishlist {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+}
+
+.event-book-card__wishlist button {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 68%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 92%);
+  color: #e5486d;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 14%);
+  cursor: pointer;
 }
 
 .event-book-card__body {

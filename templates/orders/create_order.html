@@ -235,8 +235,11 @@
         {% endfor %}
         <div class="summary-row"><span>Sous-total</span><strong>{{ subtotal }} DH</strong></div>
         <div class="summary-row"><span>Livraison fixe</span><strong>{{ shipping_cost }} DH</strong></div>
-        {% if discount %}
-            <div class="summary-row"><span>Remise fidelite 6eme livre ({{ discount_percentage }}%)</span><strong>-{{ discount }} DH</strong></div>
+        {% if loyalty_discount %}
+            <div class="summary-row"><span>Remise fidelite 6eme livre ({{ discount_percentage }}%)</span><strong>-{{ loyalty_discount }} DH</strong></div>
+        {% endif %}
+        {% if coupon_discount %}
+            <div class="summary-row"><span>Code promo {{ coupon_code }}</span><strong>-{{ coupon_discount }} DH</strong></div>
         {% endif %}
         <div class="summary-row summary-total"><span>Total</span><strong>{{ total }} DH</strong></div>
     </aside>

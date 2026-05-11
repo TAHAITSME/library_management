@@ -15,9 +15,9 @@
         <p class="eyebrow">BiblioNUM Catalogue</p>
         <h1>Decouvrez, empruntez et achetez vos livres preferes.</h1>
         <p>Une interface moderne pour explorer le catalogue, filtrer par categorie et trouver rapidement le bon livre.</p>
-        <form method="get" class="catalog-hero-search">
+        <form method="get" class="catalog-hero-search" data-catalog-search-form>
             <i class="fas fa-magnifying-glass"></i>
-            <input type="search" name="q" value="{{ query }}" placeholder="Rechercher un livre, auteur, ISBN...">
+            <input type="search" name="q" value="{{ query }}" placeholder="Rechercher un livre, auteur, ISBN..." data-catalog-search-input>
             <button type="submit">Rechercher</button>
         </form>
     </div>
@@ -28,7 +28,7 @@
         <form method="get" class="catalog-tools__form" data-live-filter-form>
             <div class="catalog-tools__search">
                 <i class="fas fa-magnifying-glass"></i>
-                <input type="search" name="q" value="{{ query }}" placeholder="Titre, auteur, ISBN" autocomplete="off" data-live-search>
+                <input type="search" name="q" value="{{ query }}" placeholder="Titre, auteur, ISBN" autocomplete="off" data-live-search data-catalog-search-input>
             </div>
             <select name="category" aria-label="Categorie">
                 <option value="">Toutes les categories</option>
@@ -43,6 +43,9 @@
                 {% endfor %}
             </select>
             <select name="sort" aria-label="Tri">
+                {% if query %}
+                    <option value="relevance" {% if current_sort == 'relevance' %}selected{% endif %}>Pertinence</option>
+                {% endif %}
                 <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Plus recents</option>
                 <option value="title" {% if current_sort == 'title' %}selected{% endif %}>Titre A-Z</option>
                 <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Prix croissant</option>
@@ -69,6 +72,14 @@
                             {% endif %}
                             <span class="event-book-card__badge">{{ book.category.name|default:"Livre" }}</span>
                         </a>
+                        {% if user.is_authenticated and not user.is_staff %}
+                            <form method="post" action="{% url 'catalog:add_to_wishlist' book.id %}" class="event-book-card__wishlist">
+                                {% csrf_token %}
+                                <button type="submit" title="Ajouter a la wishlist" aria-label="Ajouter a la wishlist">
+                                    <i class="{% if book.id in wishlist_book_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                                </button>
+                            </form>
+                        {% endif %}
 
                         <div class="event-book-card__body">
                             <h2>{{ book.title }}</h2>
@@ -124,7 +135,8 @@
         const form = document.querySelector('[data-live-filter-form]');
         if (!form) return;
 
-        const searchInput = form.querySelector('[data-live-search]');
+        const searchInputs = [...document.querySelectorAll('[data-catalog-search-input]')];
+        const heroForm = document.querySelector('[data-catalog-search-form]');
         const results = document.querySelector('[data-catalog-results]');
         const count = form.querySelector('.catalog-tools__count');
         let timer;
@@ -170,10 +182,24 @@
             }
         };
 
-        if (searchInput) {
+        const syncSearchInputs = (source) => {
+            searchInputs.forEach((input) => {
+                if (input !== source) input.value = source.value;
+            });
+        };
+
+        searchInputs.forEach((searchInput) => {
             searchInput.addEventListener('input', () => {
+                syncSearchInputs(searchInput);
                 window.clearTimeout(timer);
-                timer = window.setTimeout(() => updateResults(), 350);
+                timer = window.setTimeout(() => updateResults(), 250);
+            });
+        });
+
+        if (heroForm) {
+            heroForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                updateResults();
             });
         }
 

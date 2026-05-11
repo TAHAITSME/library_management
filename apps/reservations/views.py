@@ -6,6 +6,41 @@ from django.views.decorators.http import require_http_methods
 from datetime import timedelta
 from .models import Reservation, ReservationQueue, ReservationNotification
 from apps.catalog.models import Book
+from apps.accounts.utils import notification_url, notify_user
+
+
+def create_reservation_notification(reservation, notification_type, message):
+    ReservationNotification.objects.create(
+        reservation=reservation,
+        notification_type=notification_type,
+        message=message,
+        is_sent=True,
+        sent_at=timezone.now(),
+    )
+    notify_user(
+        reservation.user,
+        'Reservation',
+        message,
+        'reservation',
+        notification_url('reservations:detail', pk=reservation.pk),
+    )
+
+
+def refresh_queue_and_notify_next(book):
+    try:
+        queue = ReservationQueue.objects.get(book=book)
+    except ReservationQueue.DoesNotExist:
+        return
+
+    queue.total_reservations = Reservation.objects.filter(book=book, status='active').count()
+    queue.save(update_fields=['total_reservations'])
+    queue.update_queue_positions()
+
+    next_reservation = queue.get_next_reservation()
+    if next_reservation and next_reservation.is_ready_for_pickup():
+        message = f'"{book.title}" est disponible. Vous pouvez le recuperer avant expiration.'
+        if not next_reservation.notifications.filter(notification_type='ready_for_pickup').exists():
+            create_reservation_notification(next_reservation, 'ready_for_pickup', message)
 
 
 @login_required
@@ -60,15 +95,16 @@ def create_reservation(request, book_id):
                 book=book,
                 expiration_date=expiration_date,
             )
-            queue, _ = ReservationQueue.objects.get_or_create(book=book)
-            queue.total_reservations = Reservation.objects.filter(
-                book=book, status='active'
-            ).count()
-            queue.save()
-            queue.update_queue_positions()
+            ReservationQueue.objects.get_or_create(book=book)
+            refresh_queue_and_notify_next(book)
 
             # Rafraîchir pour avoir la position mise à jour
             reservation.refresh_from_db()
+            create_reservation_notification(
+                reservation,
+                'ready_for_pickup' if reservation.is_ready_for_pickup() else 'created',
+                f'Reservation creee pour "{book.title}". Position actuelle: {reservation.queue_position}.',
+            )
             messages.success(request, f'Réservation créée. Position : {reservation.queue_position}')
             return redirect('reservations:detail', pk=reservation.pk)
 
@@ -92,15 +128,12 @@ def cancel_reservation(request, pk):
         reservation.status = 'cancelled'
         reservation.save()
 
-        try:
-            queue = ReservationQueue.objects.get(book=reservation.book)
-            queue.total_reservations = Reservation.objects.filter(
-                book=reservation.book, status='active'
-            ).count()
-            queue.save()
-            queue.update_queue_positions()
-        except ReservationQueue.DoesNotExist:
-            pass
+        create_reservation_notification(
+            reservation,
+            'cancelled',
+            f'Reservation annulee pour "{reservation.book.title}".',
+        )
+        refresh_queue_and_notify_next(reservation.book)
 
         messages.success(request, f'Réservation pour "{reservation.book.title}" annulée.')
         return redirect('reservations:list')

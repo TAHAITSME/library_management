@@ -15,8 +15,9 @@ from django.views.decorators.http import require_http_methods
 
 from apps.cart.models import Cart
 from apps.catalog.models import Book
+from apps.accounts.utils import notification_url, notify_user
 
-from .models import Order, OrderItem, Payment
+from .models import Coupon, CouponRedemption, Order, OrderItem, Payment
 from .pdf import build_order_pdf
 from .stripe_services import (
     confirm_checkout_session,
@@ -34,14 +35,34 @@ def _money(value):
     return Decimal(value).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
 
-def calculate_order_pricing(user, subtotal):
+def calculate_order_pricing(user, subtotal, coupon_code=None):
     paid_books = (
         OrderItem.objects.filter(order__user=user, order__payment_status='paid')
         .aggregate(total=models.Sum('quantity'))['total'] or 0
     )
     discount_percentage = Decimal('20.00') if paid_books and paid_books % 5 == 0 else Decimal('0.00')
-    discount = _money((subtotal * discount_percentage) / Decimal('100'))
-    discount = min(discount, subtotal)
+    loyalty_discount = min(_money((subtotal * discount_percentage) / Decimal('100')), subtotal)
+    coupon = None
+    coupon_discount = Decimal('0.00')
+    coupon_error = ''
+
+    if coupon_code:
+        try:
+            coupon = Coupon.objects.get(code__iexact=coupon_code.strip())
+            user_usage_count = CouponRedemption.objects.filter(coupon=coupon, user=user).count()
+            can_use, coupon_error = coupon.can_use_coupon(user, user_usage_count)
+            if can_use and subtotal >= coupon.minimum_order_amount:
+                coupon_discount = min(_money(coupon.apply_discount(subtotal)), subtotal - loyalty_discount)
+                coupon_error = ''
+            elif can_use:
+                coupon = None
+                coupon_error = f"Montant minimum requis: {coupon.minimum_order_amount} DH"
+            else:
+                coupon = None
+        except Coupon.DoesNotExist:
+            coupon_error = 'Code promo introuvable.'
+
+    discount = min(loyalty_discount + coupon_discount, subtotal)
     shipping_cost = FIXED_SHIPPING_COST
     tax = Decimal('0.00')
     total = _money(subtotal + shipping_cost - discount)
@@ -50,6 +71,11 @@ def calculate_order_pricing(user, subtotal):
         'shipping_cost': shipping_cost,
         'tax': tax,
         'discount': discount,
+        'loyalty_discount': loyalty_discount,
+        'coupon': coupon,
+        'coupon_code': coupon.code if coupon else (coupon_code or ''),
+        'coupon_discount': coupon_discount,
+        'coupon_error': coupon_error,
         'discount_percentage': discount_percentage,
         'total': total,
     }
@@ -111,7 +137,7 @@ def create_order_view(request):
     if request.method == 'POST':
         shipping_address = request.POST.get('shipping_address', '').strip()
         subtotal = sum(item.get_total() for item in cart_items)
-        pricing = calculate_order_pricing(request.user, subtotal)
+        pricing = calculate_order_pricing(request.user, subtotal, request.session.get('coupon_code'))
         if not shipping_address:
             messages.error(request, "L'adresse de livraison est requise.")
             return render(request, 'orders/create_order.html', {
@@ -155,16 +181,32 @@ def create_order_view(request):
                     )
                     for cart_item in cart_items
                 ])
+                if pricing.get('coupon') and pricing.get('coupon_discount'):
+                    CouponRedemption.objects.create(
+                        coupon=pricing['coupon'],
+                        user=request.user,
+                        order=order,
+                        discount_amount=pricing['coupon_discount'],
+                    )
+                    pricing['coupon'].mark_as_used()
                 cart.clear()
+                request.session.pop('coupon_code', None)
 
             messages.success(request, f'Commande #{order.order_number} creee avec succes.')
+            notify_user(
+                request.user,
+                'Commande creee',
+                f'Votre commande {order.order_number} est en attente de paiement.',
+                'order',
+                notification_url('orders:order_detail', order.id),
+            )
             return redirect('orders:order_payment', order_id=order.id)
         except Exception as exc:
             logger.exception('Erreur creation commande pour user %s', request.user.id)
             messages.error(request, f'Erreur lors de la creation de la commande: {exc}')
 
     subtotal = sum(item.get_total() for item in cart_items)
-    pricing = calculate_order_pricing(request.user, subtotal)
+    pricing = calculate_order_pricing(request.user, subtotal, request.session.get('coupon_code'))
     return render(request, 'orders/create_order.html', {
         'cart_items': cart_items,
         **pricing,
@@ -243,6 +285,13 @@ def stripe_success_view(request, order_id):
         try:
             order = confirm_checkout_session(session_id, expected_order_id=order.id) or order
             messages.success(request, 'Paiement confirme. Votre commande est maintenant en traitement.')
+            notify_user(
+                request.user,
+                'Paiement confirme',
+                f'Le paiement de la commande {order.order_number} est confirme.',
+                'payment',
+                notification_url('orders:order_detail', order.id),
+            )
         except Exception as exc:
             logger.exception('Erreur confirmation Stripe success pour commande %s', order.id)
             if settings.DEBUG:

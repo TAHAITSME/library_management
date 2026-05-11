@@ -104,3 +104,32 @@ class Complaint(models.Model):
 
     def __str__(self):
         return f"{self.subject} - {self.user}"
+
+
+class UserNotification(models.Model):
+    """Notification visible dans l'espace utilisateur."""
+
+    TYPE_CHOICES = [
+        ('reservation', 'Reservation'),
+        ('borrow', 'Emprunt'),
+        ('order', 'Commande'),
+        ('payment', 'Paiement'),
+        ('system', 'Systeme'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='notifications')
+    notification_type = models.CharField(max_length=30, choices=TYPE_CHOICES, default='system')
+    title = models.CharField(max_length=160)
+    message = models.TextField()
+    url = models.CharField(max_length=255, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Notification utilisateur'
+        verbose_name_plural = 'Notifications utilisateur'
+
+    def __str__(self):
+        return f"{self.user} - {self.title}"

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -6,8 +6,10 @@ from django.contrib.auth.views import LoginView
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Sum
 from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
-from .models import Complaint, Profile
+from .models import Complaint, Profile, UserNotification
 from .forms import ComplaintForm, CustomUserCreationForm, ProfileForm, CustomAuthenticationForm
 
 from apps.borrowing.models import Borrow
@@ -171,6 +173,42 @@ def complaint_create_view(request):
         'form': form,
         'complaints': complaints,
     })
+
+
+@login_required
+def notifications_view(request):
+    if request.user.is_staff or request.user.is_superuser:
+        return redirect('dashboard:index')
+
+    notifications = request.user.notifications.all()
+    if request.GET.get('status') == 'unread':
+        notifications = notifications.filter(is_read=False)
+
+    return render(request, 'accounts/notifications.html', {
+        'notifications': notifications[:80],
+        'unread_count': request.user.notifications.filter(is_read=False).count(),
+    })
+
+
+@login_required
+@require_POST
+def mark_notification_read(request, pk):
+    notification = get_object_or_404(UserNotification, pk=pk, user=request.user)
+    if not notification.is_read:
+        notification.is_read = True
+        notification.read_at = timezone.now()
+        notification.save(update_fields=['is_read', 'read_at'])
+
+    if notification.url:
+        return redirect(notification.url)
+    return redirect('accounts:notifications')
+
+
+@login_required
+@require_POST
+def mark_all_notifications_read(request):
+    request.user.notifications.filter(is_read=False).update(is_read=True, read_at=timezone.now())
+    return redirect('accounts:notifications')
 
 
 @staff_member_required(login_url=reverse_lazy('accounts:login'))

@@ -87,6 +87,7 @@ class ReservationNotification(models.Model):
     """Notifications pour les réservations"""
     
     TYPE_CHOICES = [
+        ('created', 'Creee'),
         ('ready_for_pickup', 'Prêt pour récupération'),
         ('expiring_soon', 'Expiration bientôt'),
         ('expired', 'Expiré'),

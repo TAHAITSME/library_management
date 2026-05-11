@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications | BiblioNUM{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Notifications</p>
+        <h1>Vos alertes</h1>
+        <p>{{ unread_count }} notification(s) non lue(s).</p>
+    </div>
+    <div class="action-stack">
+        <a href="{% url 'accounts:notifications' %}?status=unread" class="btn btn-ghost">Non lues</a>
+        <form method="post" action="{% url 'accounts:notifications_read_all' %}">
+            {% csrf_token %}
+            <button class="btn btn-primary" type="submit"><i class="fas fa-check-double"></i> Tout marquer lu</button>
+        </form>
+    </div>
+</header>
+
+{% if notifications %}
+    <section class="line-list">
+        {% for notification in notifications %}
+            <article class="line-item {% if not notification.is_read %}is-highlighted{% endif %}">
+                <div class="line-item__cover">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div>
+                    <h2>{{ notification.title }}</h2>
+                    <p>{{ notification.message }}</p>
+                    <small>{{ notification.get_notification_type_display }} - {{ notification.created_at|date:"d/m/Y H:i" }}</small>
+                </div>
+                <div class="line-item__actions">
+                    {% if notification.url %}
+                        <form method="post" action="{% url 'accounts:notification_read' notification.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-primary btn-sm" type="submit">Ouvrir</button>
+                        </form>
+                    {% elif not notification.is_read %}
+                        <form method="post" action="{% url 'accounts:notification_read' notification.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-ghost btn-sm" type="submit">Marquer lu</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+        {% endfor %}
+    </section>
+{% else %}
+    {% include 'components/empty_state.html' with icon='bell' title='Aucune notification' message='Les alertes de reservation, emprunt et commande apparaitront ici.' %}
+{% endif %}
+{% endblock %}

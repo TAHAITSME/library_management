@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.views.decorators.http import require_POST
+from decimal import Decimal
 from apps.catalog.models import Book
 from apps.orders.views import calculate_order_pricing
 from .models import Cart, CartItem
@@ -11,7 +13,7 @@ def cart_view(request):
     cart, _ = Cart.objects.get_or_create(user=request.user)
     cart_items = cart.items.select_related('book').all()
     total = sum(item.get_total() for item in cart_items)
-    pricing = calculate_order_pricing(request.user, total)
+    pricing = calculate_order_pricing(request.user, total, request.session.get('coupon_code'))
 
     return render(request, 'cart/cart.html', {
         'cart': cart,
@@ -95,4 +97,36 @@ def clear_cart(request):
         cart.items.all().delete()
         messages.success(request, 'Panier vidé !')
 
+    return redirect('cart:cart')
+
+
+@login_required
+@require_POST
+def apply_coupon(request):
+    code = request.POST.get('coupon_code', '').strip()
+    if not code:
+        request.session.pop('coupon_code', None)
+        messages.info(request, 'Code promo retire.')
+        return redirect('cart:cart')
+
+    total = Decimal('0.00')
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    for item in cart.items.select_related('book'):
+        total += item.get_total()
+
+    pricing = calculate_order_pricing(request.user, total, code)
+    if pricing.get('coupon') and pricing.get('coupon_discount') > 0:
+        request.session['coupon_code'] = pricing['coupon'].code
+        messages.success(request, f"Code {pricing['coupon'].code} applique.")
+    else:
+        request.session.pop('coupon_code', None)
+        messages.warning(request, pricing.get('coupon_error') or 'Code promo non applicable.')
+    return redirect('cart:cart')
+
+
+@login_required
+@require_POST
+def remove_coupon(request):
+    request.session.pop('coupon_code', None)
+    messages.success(request, 'Code promo retire.')
     return redirect('cart:cart')

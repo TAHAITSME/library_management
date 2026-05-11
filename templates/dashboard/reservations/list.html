@@ -27,9 +27,17 @@
                     <td><span class="badge badge-{{ reservation.status }}">{{ reservation.get_status_display }}</span></td>
                     <td class="row-actions">
                         {% if reservation.status == 'active' %}
+                        <form method="post" action="{% url 'dashboard:reservation_action' reservation.pk 'ready' %}">
+                            {% csrf_token %}
+                            <button type="submit" title="Pret a recuperer"><i class="fas fa-bell"></i></button>
+                        </form>
                         <form method="post" action="{% url 'dashboard:reservation_action' reservation.pk 'complete' %}">
                             {% csrf_token %}
                             <button type="submit" title="Valider"><i class="fas fa-check"></i></button>
+                        </form>
+                        <form method="post" action="{% url 'dashboard:reservation_action' reservation.pk 'expire' %}">
+                            {% csrf_token %}
+                            <button type="submit" title="Expirer"><i class="fas fa-hourglass-end"></i></button>
                         </form>
                         <form method="post" action="{% url 'dashboard:reservation_action' reservation.pk 'cancel' %}">
                             {% csrf_token %}
